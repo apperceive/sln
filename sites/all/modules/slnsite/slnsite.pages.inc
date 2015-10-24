@@ -2701,7 +2701,7 @@ function _slnsite_project_submissions_listing($project) {
         // TODO: delete old surveys
         
         //if ($submission->sid == '384')
-          dpm(array($submission, $arr, $sub_project_id, $sub_participant_id));
+          //dpm(array($submission, $arr, $sub_project_id, $sub_participant_id));
 
         //dpm($arr);
         // what is this? rators and ratees are strings so how can they be id's (return vals?)

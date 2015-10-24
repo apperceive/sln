@@ -2063,6 +2063,28 @@ function _slnsite_get_survey($projectnode, $id) {
 } // _slnsite_get_survey
 
 
+// generate a unique token
+// see http://stackoverflow.com/questions/9543715/generating-human-readable-usable-short-but-unique-ids
+function _sln_gen_token($prefix = "", $tokenLen = 7, $base = 0) {
+  $baseChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  $baseCharsLen = drupal_strlen($baseChars);
+  $baseCharsLen = (($base > 0) && ($base < $baseCharsLen)) ? $base-1 : $baseCharsLen;
+  if (!($tokenLen > 0))
+    $tokenLen = 7;
+  srand();
+  do {
+    $retval = "";
+    for ($i = 0; $i < $tokenLen; $i++) {
+      $p = rand(0, $baseCharsLen);
+      $retval .= substr($baseChars, $p, 1);
+    } // for
+    
+    // TODO: db check for dup - use view or union or just multiple queries?
+    $onerow = db_select('field_data_field_project_observers', 'f')->fields('f', array('entity_id'))->condition('field_project_observers_field_project_observer_token_value', $retval)->execute()->fetchAssoc();
+  } while ($onerow);      // TODO: limit number of iterations and return false or null?
+  
+  return $prefix . $retval;
+} // _sln_gen_token
 
 
   
