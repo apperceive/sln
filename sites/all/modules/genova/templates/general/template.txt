@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * TODO Auto generated theme file, add description.
+ */
+?>
+{template_code}

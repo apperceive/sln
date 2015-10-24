@@ -1,0 +1,140 @@
+<?php
+/**
+ * @file
+ * Drupal 7 version of slnslq360 module.
+ */
+
+ ////////  HOOKS AND CALLBACKS
+
+// CONSIDER: add another arg for webform or section? e.g., plan?
+// uid only required for admins to view other's results
+// TODO: add menu/URL for taking/reviewing a survey with format /survey/%surveyname/%leader/%uid
+/**
+ * Implements XXX.
+ */
+function slnslq360_menu() {
+  $items = array();
+
+
+  /*
+  $items['sln'] = array(
+    'title' => 'Strategic Leader Network Survey',
+    'page callback' => '_slnslq360_project_page',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['dashboard'] = array(
+    'title' => 'Strategic Leader Network Dashboard',
+    'page callback' => '_slnslq360_dashboard',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_CALLBACK,
+  );
+  */
+
+  $items['admin/config/slnslq360'] = array(
+    'description' => 'SLN SLQ 360 option settings.',
+    'title' => 'SLN SLQ 360 Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnslq360_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+  );
+
+  $items['slnslq360/test'] = array(
+    'title' => 'MSS 360 Test Page',
+    'page callback' => '_slnslq360_msstestpage',
+    'access callback' => TRUE,        // TODO: limit to admin?
+    'type' => MENU_CALLBACK,
+  );
+
+
+  return $items;
+} // slnslq360_menu
+
+
+/**
+ * Menu callback; show settings form.
+ * @see _slnsite_admin_settings_validate()
+ *
+ */
+function _slnslq360_admin_settings($form, &$form_state)  {
+  //drupal_set_title("XXX");
+  $form['#attributes']['class'][] = 'slnslq360-admin-settings';
+  $form['introduction'] = array(
+    '#type' => 'markup',
+    '#markup' => "<p>text goes here.</p>",
+  );
+
+  $form['requirednote'] = array(
+    '#type' => 'markup',
+    '#markup' => "<p><small><span class='form-required'>*</span> Indicates that a field entry is required.</small></p>",
+  );
+
+  /*
+  $options = _slnsite_get_surveys_as_options();
+
+  // TODO: select the survey from all sln_surveys as options
+  $form['survey'] = array(
+    '#type' => 'select',
+    '#title' => t('Survey'),
+    '#required' => TRUE,
+    '#options' => $options,
+    //'#default_value' => $category['selected'],
+    '#description' => t('Select a survey form to use as a template for new forms checked below.'),
+  );
+
+  $form['genforms'] = array(
+    '#title' => t('Check which forms you wish to generate:'),
+    '#required' => TRUE,
+    '#type' => 'checkboxes',
+    '#options' => array
+      (
+      'plan' => 'Planning Form',
+      'data' => 'Data Entry Form',
+      ),
+    //'#default_value'   => variable_get('fd_boxes', 0),
+    '#description' => t('Select at least one form type to generate.'),
+  );
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title template'),
+    '#maxlength' => 60,
+    '#required' => TRUE,
+    '#default_value' => "[slnsite:node_title] [slnsite:form_type]",
+    '#description' => t("The titles for the generated forms. Use [slnsite:node_title] and [slnsite:form_type] as tokens for the current survey title and the selected form within the new title. Form types are 'Planning Form' and 'Data Entry Form'"),
+  );
+  */
+
+  // $form['nid'] = array(
+    // '#type' => 'hidden',
+    // '#value' => $nid,
+  // );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#access' => TRUE,
+    '#value' => t('Save'),
+    //'#submit' => array('ja_accessadd_submit'),
+  );
+
+
+  //$form = system_settings_form($form);
+  return $form;
+} //_slnslq360_admin_settings
+
+
+// for quick testing of functions
+/**
+ * Implements XXX.
+ */
+function _slnslq360_msstestpage() {
+  $s = "MSS SLN SLQ 360 test page complete.";
+
+
+  dpm(get_defined_vars());
+  return $s;
+} // _slnslq360_msstestpage
+
+
+

@@ -1,0 +1,7 @@
+$schema['{table}'] = array(
+    'description' => '',
+    'fields' => array(
+{fields}
+    ),
+    'primary key' => array('{primary_key}'),
+  );

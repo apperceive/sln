@@ -1,0 +1,5 @@
+$form['{element_id}'] = array(
+    '#type' => 'textarea',
+    '#title' => t('{element_name}'),
+    '#default_value' => {default_value},
+  );

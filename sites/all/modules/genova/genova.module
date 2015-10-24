@@ -1,0 +1,278 @@
+<?php
+/**
+ * @file
+ *   Module bootstrap file.
+ */
+
+require_once 'genova.util.inc';
+
+
+/**
+ * @param $module_name
+ * @param $component
+ * @param array $params
+ * @throws GenException
+ */
+function genova_component_create($module_name, $component, $params = array()) {
+
+  /* @var GenComponent $gen_component */
+  $gen_component = NULL;
+
+  try {
+    $class = genova_get_component_class($component);
+
+    // Determine module path from module name.
+    $module_path = genova_get_module_path($module_name);
+
+    $gen_component = new $class();
+    $gen_component->drushInit($module_name, $module_path, $params);
+
+    $gen_component->validateInputs();
+    $gen_component->buildComponent();
+    $gen_component->onSuccess();
+  }
+  catch (GenException $e) {
+
+    if (!empty($gen_component)) {
+      $gen_component->onFail();
+    }
+
+    throw $e;
+  }
+}
+
+function genova_set_messenger(GenMessenger $messenger = NULL) {
+  $registry = &drupal_static(__FUNCTION__);
+
+  if (!empty($messenger)) {
+    $registry = $messenger;
+  }
+
+  return $registry;
+}
+
+/**
+ * @return GenMessenger
+ */
+function genova_get_messenger() {
+  return genova_set_messenger();
+}
+
+/**
+ * Writes code snippet into a file. In case the file exists it will append the
+ * $snippet, unless third argument is passed in as NULL.
+ *
+ * @param string $path
+ *   File path where to write the snippet.
+ * @param string $snippet
+ *   The code snippet.
+ * @param int $fput_flags
+ *   file_put_contents() flags.
+ *
+ * @throws GenException
+ */
+function genova_put_code_snippet($path, $snippet, $fput_flags = FILE_APPEND) {
+  if (file_put_contents($path, $snippet, $fput_flags) === FALSE) {
+    throw new GenException(strtr('Could not write file @path', array('@path' => $path)));
+  }
+}
+
+/**
+ * Injects code snippet into existing code.
+ *
+ * @param string $path
+ *   Path to the file where the snippet is going to be injected.
+ * @param string $scope
+ *   Scope withing the file where the snippet is going to be injected. It can be
+ *   either a function name or a class name.
+ * @param string $snippet
+ *   The code snippet.
+ * @param string $placeholder
+ *   Placeholder.
+ * @param string $append
+ *   What will be appended to the snippet.
+ * @param string $prepend
+ *   What will be prepended to the snippet.
+ * @param boolean $regex
+ *   If to use regex search.
+ *
+ * @throws GenException
+ */
+function genova_inject_code_snippet($path, $scope, $snippet, $placeholder, $append = NULL, $prepend = NULL, $regex = FALSE) {
+  $content = file_get_contents($path);
+
+  if (empty($content)) {
+    throw new GenException('No content found into which it might be possible to inject snippet.');
+  }
+
+  $matches = NULL;
+  preg_match("<$scope.*(\(.*\))?.*\{[\s\d\w\W]*>", $content, $matches);
+
+  if (empty($matches[0])) {
+    throw new GenException(strtr('Provided scope @scope has not been matched at @path',
+      array('@scope' => $scope, '@path' => $path)));
+  }
+
+  $brackets_cnt = 0;
+  $inject_subject = '';
+
+  for ($i = 0; $i < strlen($matches[0]); $i++) {
+    if ($matches[0]{$i} == '{') {
+      $brackets_cnt++;
+    }
+    elseif ($matches[0]{$i} == '}') {
+      $brackets_cnt--;
+
+      if ($brackets_cnt == 0) {
+        $inject_subject .= $matches[0]{$i};
+        break;
+      }
+    }
+    $inject_subject .= $matches[0]{$i};
+  }
+
+  if (($regex && preg_match($placeholder, $inject_subject) == 0) || (!$regex && strpos($inject_subject, $placeholder) === FALSE)) {
+    throw new GenException(strtr('Placeholder @placeholder not found, cannot inject code snippet to @path.',
+      array('@placeholder' => $placeholder, '@path' => $path)));
+  }
+
+  $inject_subject_unchanged = $inject_subject;
+
+  if ($regex) {
+    $inject_subject = preg_replace("<$placeholder>", $prepend . $snippet . $append, $inject_subject);
+  }
+  else {
+    $inject_subject = str_replace($placeholder, $prepend . $snippet . $append, $inject_subject);
+  }
+
+  $content = str_replace($inject_subject_unchanged, $inject_subject, $content);
+  genova_put_code_snippet($path, $content, NULL);
+}
+
+/**
+ * Gets module path. It considers if the module is installed or not. In case the
+ * module is installed it gets its actual path. Otherwise it gets its
+ * scaffolding path. If the module directory does not exits, it will create it.
+ *
+ * @param string $module_name
+ *   Module name.
+ * @param boolean $create_module_dir
+ *   Flag to determine if to create module directory if not exists yet.
+ *
+ * @return string
+ *   Module path.
+ * @throws GenException
+ */
+function genova_get_module_path($module_name, $create_module_dir = TRUE) {
+
+  if (function_exists('module_exists') && module_exists($module_name)) {
+    return drupal_get_path('module', $module_name);
+  }
+
+  if (PHP_SAPI == 'cli') {
+    $scaffolding_dir = drush_get_context('DRUSH_DRUPAL_ROOT') . '/sites/all/scaffolding';
+  }
+  else {
+    $scaffolding_dir = DRUPAL_ROOT . '/sites/all/scaffolding';
+  }
+
+
+  if (!file_exists($scaffolding_dir)) {
+    mkdir($scaffolding_dir);
+  }
+
+  $module_path = $scaffolding_dir . '/' . $module_name;
+
+  if ($create_module_dir && !file_exists($module_path) && !mkdir($module_path)) {
+    throw new GenException(strtr('Unable to create module directory at @path', array('@path' => $module_path)));
+  }
+
+  return $module_path;
+}
+
+/**
+ * Determines if module exists.
+ *
+ * @param $module_name
+ *   Module name.
+ *
+ * @return bool
+ */
+function genova_module_exists($module_name) {
+  $info_file = genova_get_module_path($module_name, FALSE) . '/' . $module_name . '.info';
+  return file_exists($info_file);
+}
+
+/**
+ * Adds require_once 'file_name' to the beginning of the .module file.
+ * TODO - mind the @file comment block.
+ *
+ * @param $module_name
+ *   Module name.
+ * @param $file_name
+ *   File name to be included.
+ */
+function genova_add_file_include($module_name, $file_name) {
+  $module_file_path = genova_get_module_path($module_name) . '/' . $module_name . '.module';
+  $code = file_get_contents($module_file_path);
+  $snippet = "require_once '$file_name';";
+
+  if (strpos($code, $snippet) === FALSE) {
+    genova_inject_code_snippet($module_file_path, NULL, $snippet, '<?php', NULL, "<?php\n");
+  }
+}
+
+/**
+ * Gets path to a file. It will not be created, just the path is built.
+ *
+ * @param string $module_name
+ *   Module name
+ * @param string $type
+ *   File type (i.e. install, module, pages.inc, ...).
+ * @param string $file_name
+ *   File name.
+ *
+ * @return string
+ *   Complete file path.
+ * @throws GenException
+ */
+function genova_get_output_file_path($module_name, $type = NULL, $file_name = NULL) {
+
+  if (!empty($type) && empty($file_name)) {
+    $file_name = $module_name . '.' . $type;
+  }
+
+  if (empty($file_name)) {
+    throw new GenException('File name could not be determined.');
+  }
+
+  return genova_get_module_path($module_name) . '/' . $file_name;
+}
+
+/**
+ * Determines if hook already exists.
+ *
+ * @param string $module_name
+ *   Module name.
+ * @param string $hook
+ *   Hook to check if is implemented.
+ * @param string $file_name
+ *   File name where to perform the check. If not provided the .module file
+ *   will be used.
+ *
+ * @return bool
+ *   Check result.
+ */
+function genova_hook_exists($module_name, $hook, $file_name = NULL) {
+  if (empty($file_name)) {
+    $file_name = $module_name . '.module';
+  }
+
+  $file_path = genova_get_output_file_path($module_name, NULL, $file_name);
+
+  if (!file_exists($file_path)) {
+    return FALSE;
+  }
+
+  return genova_function_exists($file_path, $module_name . '_' . $hook);
+}

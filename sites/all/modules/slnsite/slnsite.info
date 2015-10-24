@@ -1,0 +1,21 @@
+name = SLN Site Customizations 
+description = Handle custom site needs
+package = Strategic Leader Network
+core=7.x
+php = 5.3
+
+configure = admin/config/slnsite
+
+dependencies[] = webform
+dependencies[] = views
+
+
+files[] = slnsite.admin.pages.inc
+files[] = slnsite.install
+files[] = slnsite.js.inc
+files[] = slnsite.module
+files[] = slnsite.pages.inc
+files[] = slnsite.test.inc
+files[] = slnsite.utils.inc
+files[] = slnsite.webform.inc
+

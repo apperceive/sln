@@ -1,0 +1,6 @@
+      {name} => array(
+        'type' => 'blob',
+        'not null' => TRUE,
+        'size' => 'big',
+        'description' => '',
+      ),

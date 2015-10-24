@@ -1,0 +1,4 @@
+$perms['{perm_id}'] = array(
+    'title' => t('{perm_title}'),
+    'description' => t('{perm_description}'),
+  );

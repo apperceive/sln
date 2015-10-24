@@ -1,0 +1,275 @@
+/* slnzen7 base styles. Originally from garland */
+
+div.messages,
+div.status,
+div.warning,
+div.error {
+  min-height: 21px;
+  margin: 0 1em 5px 1em;
+  border: 2px solid #888;
+  padding: 5px 5px 5px 35px; 
+  color: #000;
+  background-color: #eee;
+  /*
+  background-image: url(images/messages-status.png);
+  background-repeat: no-repeat;
+  background-position: 5px 5px; 
+  */
+}
+
+div.status /* Normal priority messages */ {
+}
+
+/*
+#page {
+  margin: 5px auto;
+}
+*/
+
+
+/*
+.views-table {
+
+}
+
+.views-table th {
+  padding: 5px 10px;
+}
+
+.views-table td {
+  padding: 5px 10px;
+
+}
+*/
+
+input {
+  font: 12px/100% Verdana, sans-serif;
+  color: #494949;
+}
+
+textarea, select {
+  font: 12px/160% Verdana, sans-serif;
+  color: #494949;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  /*font-family: Helvetica, Arial, sans-serif;*/
+}
+
+h1 {
+  font-size: 170%;
+}
+
+h2 {
+  font-size: 160%;
+  line-height: 130%;
+}
+
+h3 {
+  font-size: 140%;
+}
+
+h4 {
+  font-size: 130%;
+}
+
+h5 {
+  font-size: 120%;
+}
+
+h6 {
+  font-size: 110%;
+}
+
+ul, quote, code, fieldset {
+  margin: .5em 0;
+}
+
+p {
+  margin: 0.6em 0 1.2em;
+  padding: 0;
+}
+
+a:link, a:visited {
+  color: #027AC6;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #0062A0;
+  text-decoration: underline;
+}
+
+a:active, a.active {
+  color: #5895be;
+}
+
+hr {
+  margin: 0;
+  padding: 0;
+  border: none;
+  height: 1px;
+  background: #5294c1;
+}
+
+ul {
+  margin: 0.5em 0 1em;
+  padding: 0;
+}
+
+ol {
+  margin: 0.75em 0 1.25em;
+  padding: 0;
+}
+
+ol li, ul li {
+  margin: 0.4em 0 0.4em .5em; /* LTR */
+}
+
+ul.menu, .item-list ul {
+  margin: 0.35em 0 0 -0.5em; /* LTR */
+  padding: 0;
+}
+
+ul.menu ul, .item-list ul ul {
+  margin-left: 0em; /* LTR */
+}
+
+ol li, ul li, ul.menu li, .item-list ul li, li.leaf {
+  margin: 0.15em 0 0.15em .5em; /* LTR */
+}
+
+ul li, ul.menu li, .item-list ul li, li.leaf {
+  /*padding: 0 0 .2em 1.5em;*/
+  list-style-type: none;
+  list-style-image: none;
+  /*background: transparent url(images/menu-leaf.png) no-repeat 1px .35em;*/ /* LTR */
+}
+
+ol li {
+  padding: 0 0 .3em;
+  margin-left: 2em; /* LTR */
+}
+
+ul li.expanded {
+  background: transparent url(images/menu-expanded.png) no-repeat 1px .35em; /* LTR */
+}
+
+ul li.collapsed {
+  background: transparent url(images/menu-collapsed.png) no-repeat 0px .35em; /* LTR */
+}
+
+ul li.leaf a, ul li.expanded a, ul li.collapsed a {
+  display: block;
+}
+
+ul.inline li {
+  background: none;
+  margin: 0;
+  padding: 0 1em 0 0; /* LTR */
+}
+
+ol.task-list {
+  margin-left: 0; /* LTR */
+  list-style-type: none;
+  list-style-image: none;
+}
+ol.task-list li {
+  padding: 0.5em 1em 0.5em 2em; /* LTR */
+}
+ol.task-list li.active {
+  background: transparent url(images/task-list.png) no-repeat 3px 50%; /* LTR */
+}
+ol.task-list li.done {
+  color: #393;
+  background: transparent url(../../misc/watchdog-ok.png) no-repeat 0px 50%; /* LTR */
+}
+ol.task-list li.active {
+  margin-right: 1em; /* LTR */
+}
+
+fieldset ul.clear-block li {
+  margin: 0;
+  padding: 0;
+  background-image: none;
+}
+
+dl {
+  margin: 0.5em 0 1em 1.5em; /* LTR */
+}
+
+dl dt {
+}
+
+dl dd {
+  margin: 0 0 .5em 1.5em; /* LTR */
+}
+
+img, a img {
+  border: none;
+}
+
+table {
+  margin: 1em 0;
+  width: 100%;
+}
+
+thead th {
+  border-bottom: 2px solid #d3e7f4;
+  color: #494949;
+  font-weight: bold;
+}
+
+th a:link, th a:visited {
+  color: #6f9dbd;
+}
+
+td, th {
+  padding: .3em .5em;
+}
+
+tr.even, tr.odd, tbody th {
+  border: solid #d3e7f4;
+  border-width: 1px 0;
+}
+
+tr.odd, tr.info {
+  background-color: #edf5fa;
+}
+
+tr.even {
+  background-color: #fff;
+}
+
+tr.drag {
+  background-color: #ffb;
+}
+
+tr.drag-previous {
+  background-color: #ffd;
+}
+
+tr.odd td.active {
+  background-color: #ddecf5;
+}
+
+tr.even td.active {
+  background-color: #e6f1f7;
+}
+
+td.region, td.module, td.container, td.category {
+  border-top: 1.5em solid #fff;
+  border-bottom: 1px solid #b4d7f0;
+  background-color: #d4e7f3;
+  color: #455067;
+  font-weight: bold;
+}
+
+tr:first-child td.region, tr:first-child td.module, tr:first-child td.container, tr:first-child td.category {
+  border-top-width: 0;
+}
+
+

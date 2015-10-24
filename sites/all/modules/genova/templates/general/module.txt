@@ -1,0 +1,6 @@
+<?php
+/**
+ * @file
+ * Main bootstrap file of the {name} module.
+ */
+

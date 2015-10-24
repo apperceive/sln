@@ -1,0 +1,10 @@
+
+/**
+ * Implements hook_schema().
+ *
+ */
+function {name}_schema() {
+  $schema = array();
+
+  return $schema;
+}

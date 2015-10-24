@@ -1,0 +1,11 @@
+$menu['{path}'] = array(
+    'title' => '{title}',
+    'description' => {description},
+    'page callback' => '{page_callback}',
+    'page arguments' => array({page_arguments}),
+    'access callback' => {access_callback},
+    'access arguments' => array({access_arguments}),
+    'file' => '{file}',
+    'type' => {type},
+    'weight' => {weight},
+  );

@@ -1,0 +1,10 @@
+name = pChart
+description = <a href="http://www.pchart.net">pChart</a> integration.
+core = 7.x
+files[] = pchart.module
+; Information added by drupal.org packaging script on 2013-10-01
+version = "7.x-1.0+1-dev"
+core = "7.x"
+project = "pchart"
+datestamp = "1380622703"
+

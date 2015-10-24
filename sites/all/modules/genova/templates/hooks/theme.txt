@@ -1,0 +1,10 @@
+
+/**
+ * Implements hook_theme().
+ *
+ */
+function {name}_theme() {
+  $theme = array();
+
+  return $theme;
+}

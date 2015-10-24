@@ -1,0 +1,11 @@
+--- node_reference.module
++++ node_reference.module
+@@ -425,7 +425,7 @@
+     case 'node_reference_plain':
+       foreach ($items as $delta => $item) {
+         if ($item['access']) {
+-          $node = $item['node'];
++          $node = isset($item['node']) ? $item['node'] : node_load($item['nid']);
+           $label = entity_label('node', $node);
+           if ($display['type'] == 'node_reference_default') {
+             $uri = entity_uri('node', $node);

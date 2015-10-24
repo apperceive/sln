@@ -1,0 +1,6 @@
+      '{name}' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '',
+      ),

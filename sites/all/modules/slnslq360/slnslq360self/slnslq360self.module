@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Module bootstrap file.
+ */
+
+/**
+ * Implements hook_STORE_KEY_mforms_init().
+ */
+function slnslq360self_slnslq360self_mforms_init() {
+  $store = MformsSessionStore::getInstance('slnslq360self');
+  $steps = MformsSteps::getInstance($store);
+
+  // If using mustistep controls you need to explicitly define form steps and
+  // its attributes.
+  $controls = MformsMultiStepControls::getInstance($store, $steps, array(
+    '_slnslq360self_step1' => array('value' => 'SLQ Page 1', 'weight' => -103),
+    '_slnslq360self_step2' => array('value' => 'SLQ Page 2', 'weight' => -102),
+    '_slnslq360self_step3' => array('value' => 'Part 2', 'weight' => -101),
+    '_slnslq360self_step4' => array('value' => 'Part 3', 'weight' => -100),
+  ));
+  // Ajaxify the form stepping process.
+  $controls->ajaxify();
+
+  // Init the mforms.
+  mforms_init_module('slnslq360self', 'slnslq360self', $store, $controls);
+
+  dpm(get_defined_vars());
+
+}
+
+/**
+ * Implements of hook_menu().
+ *
+ */
+function slnslq360self_menu() {
+
+  $items['slnslq360self'] = array(
+    'title' => 'SLN SLQ 360 Self Assessment',
+    'page callback' => 'slnslq360self_slnslq360self_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'slnslq360self.pages.inc',
+  );
+
+  return $items;
+}
+
+

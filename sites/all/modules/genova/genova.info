@@ -1,0 +1,24 @@
+name = Genova
+description = Drupal code generator.
+package = Development
+core = 7.x
+
+files[] = genova.classes.inc
+files[] = components/genova.icomponent.inc
+files[] = components/genova.classes.inc
+files[] = components/genova.css.inc
+files[] = components/genova.js.inc
+files[] = components/genova.menu.inc
+files[] = components/genova.module.inc
+files[] = components/genova.schema.inc
+files[] = components/genova.permission.inc
+files[] = components/genova.theme.inc
+files[] = components/genova.form.inc
+files[] = components/genova.fitems.inc
+
+; Information added by drupal.org packaging script on 2013-09-30
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "genova"
+datestamp = "1380580653"
+

@@ -1,0 +1,9 @@
+name = Webform SLN Translate
+description = Translate webform components
+core = 7.x
+package = Strategic Leader Network
+
+dependencies[] = webform (4.x)
+
+files[] = webform_sln_translate.inc
+;files[] = webform_sln_translate.install

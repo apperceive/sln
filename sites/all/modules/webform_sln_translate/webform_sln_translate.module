@@ -1,0 +1,26 @@
+<?php 
+/**
+ * Implements hook_webform_component_info().
+ */
+/*function webform_sln_translate_webform_component_info() {
+  return array(
+    'layout_box' => array(
+      'label' => t('Webform SLN Translate'),
+      'description' => t('Allows you to translate components.'),
+      'features' => array(
+        'csv' => FALSE,
+        'required' => FALSE,
+        'conditional' => FALSE,
+        'group' => TRUE,
+        'title_display' => FALSE,
+        'title_inline' => FALSE,
+        'description' => FALSE,
+        'wrapper_classes' => FALSE,
+      ),
+      'file' => 'layout_box.inc',
+    ),
+  );
+}*/
+
+
+

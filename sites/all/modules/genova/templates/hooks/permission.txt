@@ -1,0 +1,10 @@
+
+/**
+ * Implements hook_permissions().
+ *
+ */
+function {name}_permission() {
+  $perms = array();
+
+  return $perms;
+}

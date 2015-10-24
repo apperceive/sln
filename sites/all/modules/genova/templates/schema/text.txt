@@ -1,0 +1,5 @@
+      '{name}' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => '',
+      ),

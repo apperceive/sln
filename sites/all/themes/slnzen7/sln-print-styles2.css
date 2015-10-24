@@ -1,0 +1,363 @@
+
+h2.print-title,
+div.print-site_name,
+div.print-breadcrumb ,
+fieldset.webform-submission-info,
+fieldset.webform-submission-info > legend,
+hr.print-hr {
+  display: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: Georgia;
+}
+pre, tt, code, kbd, samp, var {
+  font-family: "Courier New", Courier, monospace;
+}
+
+h1 {font-size: 1.5em;}
+h2 {font-size: 1.4em;}
+h3 {font-size: 1.3em;}
+h4 {font-size: 1.2em;}
+h5 {font-size: 1.1em;}
+h6 {font-size: 1em;}
+
+h1, h2, h3, h4, h5 {font-weight: normal;}
+
+body, p, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, button, textarea, blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+th {
+  background: #000;
+  color: #ffff00;
+  padding: 5px;
+}
+td {
+  padding: 5px;
+}
+
+fieldset, img {
+  border: 0;
+}
+
+img {vertical-align: bottom;}
+
+ol li {list-style-type: decimal;}
+ul li {list-style-type: disc;}
+ul ul li {list-style-type: circle;}
+ul ul ul li {list-style-type: square;}
+ol ol li {list-style-type: lower-alpha;}
+ol ol ol li {list-style-type: lower-roman;}
+
+sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+legend {
+  color: #000;
+  padding-bottom: .5em;
+}
+
+/* tables */
+
+
+table td,
+table tr,
+table th,
+/*table tbody,*/
+table thead,
+table caption {
+  border: solid thin black;
+}
+
+table.sln-submitter-info {
+  width: 40%;
+}
+
+table.sln-submitter-info,
+table.sln-action-map-table,
+table.sln-compare-table,
+table.sln-skills-table {
+  /*border: solid thin black;*/
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  margin: 20px 0;
+}
+
+table.sln-summary-radar-table {
+  font-size: 80%;
+  margin: 0 auto;
+  width: 80%;
+}
+
+
+table.sln-action-map-table {
+  width: 100%;
+}
+
+table.sln-action-map-table td:first-child {
+  width: 60%;
+}
+
+table.sln-summary-radar-table th,
+table.sln-action-map-table th,
+table.sln-compare-table th,
+table.sln-skills-table th {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  text-align: center;
+  color: yellow;
+  background-color: black;
+}
+
+table.sln-summary-radar-table tr,
+table.sln-action-map-table tr,
+table.sln-submitter-info tr,
+table.sln-compare-table tr,
+table.sln-skills-table tr {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  background-color: white;
+}
+
+table.sln-summary-radar-table td,
+table.sln-submitter-info td,
+table.sln-compare-table td,
+table.sln-skills-table td {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  background-color: white;
+}
+
+table.sln-action-map-table  {
+  border: solid thin black;
+  /*page-break-after: never;*/
+}
+
+table.sln-action-map-table td {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+}
+
+table.sln-submitter-info td:first-child,
+table.sln-skills-table td:first-child {
+  width: 20%;
+}
+
+tr.sln-action-plan-legend {
+  font-size: 80%;
+}
+
+table.sln-360-project-action-data .strength,
+table.sln-action-map-table .strength {
+  background-color: green;
+  color: white;
+}
+
+table.sln-360-project-action-data .weakness ,
+table.sln-action-map-table .weakness {
+  background-color: red;
+  color: white;
+}
+
+tr.sln-action-plan-legend span.weakness,
+tr.sln-action-plan-legend span.strength {
+  padding: 3px 5px;
+}
+
+
+/* output submitted planning actions table */
+
+
+table.sln-submission-plans-table {
+  /*width: 100%;*/
+  table-layout: fixed;
+  border: solid thin black;
+}
+
+table.sln-submission-plans-table th {
+  background-color: black;
+  color: yellow;
+  text-align: center;
+}
+
+table.sln-submission-plans-table td {
+  /*width: 20%;*/
+  border: solid thin black;
+  text-align: center;
+}
+
+table.sln-submission-plans-table td.question-action-plan {
+  /*width: 60%; */
+  /*word-wrap: break-word;*/
+  /*width: 500px;*/
+  text-align: left;
+  /* width: 400px;*/   /* this slows down pdf gen a lot! and does not help */
+}
+
+table.sln-submission-plans-table td.question-action-plan p.action-plan {
+  /*width: 500px;*/ /* this will cause overflow of cell */
+  /*background-color: tan;*/
+  width: 400px;
+}
+
+table.sln-submission-plans-table col.skill {
+  /*background-color: rgba(0, 0, 255, .25);*/
+  width: 15%;
+  text-align: center;
+}
+
+table.sln-submission-plans-table col.action {
+  /*background-color: rgba(255, 0, 0, .25);*/
+  width: 70%;
+  /*text-align: left;  */
+}
+
+table.sln-submission-plans-table col.term {
+  /*background-color: rgba(0, 255, 0, .25);*/
+  width: 15%;
+  text-align: center;
+}
+
+
+h2.sln-subheading {
+  color: #aa0000;
+  font-variant: small-caps;
+  padding: 20px 0 10px 0;
+}
+
+
+p {
+  padding: 20px 0 10px 0;
+}
+
+/*.newpage {
+ page-break-before: always;
+}*/
+
+div.sln-resources h3  {
+  padding: 10px 0;
+}
+
+div.sln-resources ul  {
+  margin-left: 30px;
+}
+
+div.sln-resources ul  li {
+  list-style: disc;
+  padding: 5px;
+}
+
+hr.print-hr {
+  display: none;
+}
+
+
+/*div#sln-header {
+  background-color: black;
+  color: yellow;
+  padding: 10px 0 0px 20px;
+  margin: 0 0 20px 0;
+}*/
+div#sln-header {
+  background-color: black;
+  color: yellow;
+  padding: 10px 0 5px 20px;
+  margin: 10px 0;
+}
+
+div#sln-header h1.description{
+  font-variant: small-caps;
+}
+
+ul.sln-chart-legend li {
+  display: inline-block;
+  padding: 0 10px;
+}
+
+.sln-chart-legend {
+  border: none;
+  width: 424px;
+  margin: 0 auto;
+}
+
+table.sln-chart-legend tr,
+table.sln-chart-legend tbody {
+  border: none;
+}
+
+table.sln-chart-legend td {
+  text-align: center;
+  border: none;
+}
+
+.sln-chart-legend  div {
+  display: inline-block;
+  width: 140px;
+  text-align: center;
+}
+
+p.sln-action-map-directions .self,
+.sln-chart-legend .self .color {
+  color: #f00;
+  font-weight: bold;
+}
+p.sln-action-map-directions .observers,
+.sln-chart-legend .observers .color {
+  color: #00b050;  
+  font-weight: bold;
+}
+p.sln-action-map-directions .supervisor,
+.sln-chart-legend .supervisor .color {
+  color: #00f;
+  font-weight: bold;
+}
+
+ul.sln-project-report-action-directions {
+  margin: 0 0 0 20px;
+}
+
+ul.sln-project-report-action-directions li {
+  list-style: disc;
+  padding: 0 0 10px 10px;
+}
+
+div.sln-project-report-chart {
+  text-align: center;
+}
+
+.sln-newpage {
+  page-break-before: always;
+}
+
+td.question-action-plan span.response,
+td.question-action-plan span.question {
+  /*font-size: 60%;*/
+  color: #444;
+}
+
+td.question-action-plan p.action-plan {
+  /*font-weight: bold;
+  font-size: 110%;*/
+}
+
+.important {
+  color: red;
+}
+
+
+.number {
+  text-align: center;
+}

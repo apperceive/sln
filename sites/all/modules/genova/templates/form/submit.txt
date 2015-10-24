@@ -1,0 +1,12 @@
+
+/**
+ * Form submit callback of {func_name}.
+ *
+ * @param array $form
+ *   Drupal form array.
+ * @param array $form_state
+ *   Drupal form_state array.
+ */
+function {func_name}_submit($form, &$form_state) {
+
+}

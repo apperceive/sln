@@ -1,0 +1,741 @@
+/* style.css - styles for slnzen7*/
+
+.sln-debug {
+  display: none;
+  font-weight: bold;
+}
+
+body {
+  /*margin: 10px 10px 50px 10px;
+  padding: 20px ;*/
+  background-color: #fff; /*#eeeeff;*/
+  font-family: /*Georgia, "Times New Roman",*/ Arial, Verdana, Tahoma, sans-serif;
+}
+
+#page-wrapper,
+.region-page-closure {
+  min-width: 640px;
+}
+
+#header {
+  background-color: black;
+  color: yellow;
+  padding: 10px 0 5px 20px;
+  margin: 10px;
+  height: 110px;
+  background-image: -webkit-gradient(
+    linear,
+    right bottom,
+    right top,
+    color-stop(0, #FFFFFF),
+    color-stop(0.49, #000000)
+  );
+  background-image: -o-linear-gradient(top, #FFFFFF 0%, #000000 49%);
+  background-image: -moz-linear-gradient(top, #FFFFFF 0%, #000000 49%);
+  background-image: -webkit-linear-gradient(top, #FFFFFF 0%, #000000 49%);
+  background-image: -ms-linear-gradient(top, #FFFFFF 0%, #000000 49%);
+  background-image: linear-gradient(to top, #FFFFFF 0%, #000000 49%);
+}
+
+div#sln-header {
+  background-color: black;
+  color: yellow;
+  padding: 10px 0 5px 20px;
+  margin: 10px 0;
+}
+
+div#sln-header h1.description{
+  font-variant: small-caps;
+}
+
+body.page-slnsurvey-submission-report #header {
+  display: none;
+}
+
+#header img.header__logo-image {
+  display: inline-block;
+  margin: 10px 0 0 0;
+}
+
+#header #name-and-slogan {
+  display: inline-block;
+}
+
+#header #name-and-slogan h1.title {
+  margin: 0;
+  padding: 10px 0 0 0;
+}
+
+#header #name-and-slogan h1 a span {
+  display: inline-block;
+  margin: 0 0 0 10px;
+  color: yellow;
+}
+
+#header #site-slogan {
+  margin: 0 0 0 16px;
+}
+
+#mission {
+  padding: 1em;
+  background-color: #fff;
+  border: 1px solid #e0e5fb;
+  margin-bottom: 2em;
+}
+
+#main {
+  min-height: 400px;
+  padding-top: 1em;
+}
+
+#footer {
+  margin: 20px 0 0 0;
+  padding: 20px 0 0 0;
+  text-align: center;
+  font-size: 80%;
+  border-top: solid 2px #aaa;
+}
+
+#footer p {
+  padding: 0;
+  margin: 3px 0;
+}
+
+.important {
+  color: red;
+}
+
+
+/* survey webform styling */
+
+body.node-type-sln-project h1.page__title {
+  margin: 0 0 20px 0;
+}
+
+
+/* survey webform styling */
+/******/
+body.node-type-sln-survey h1.page__title {
+  display: none;
+}
+
+article.node-sln-survey  em {
+  text-decoration: underline;
+}
+
+article.node-sln-survey  .sln-survey-body {
+  padding: 0 50px;
+}
+
+article.node-sln-survey  .introduction {
+  margin-top: 80px;
+}
+
+
+/* webform submission edit styling */
+/* TODO: wrap submission inside an article.node-sln-survey or add sln-survey to body classes for all survey nodes and submission edits pages */
+.webform-submission .introduction {
+  margin-top: 80px;
+}
+
+/* planning webform */
+/******/
+body.page-survey  div.sln-survey-page-num-4 table.action-plan-headings th.col1 ,
+body.sln-survey-form-self  div.sln-survey-page-num-9 table.action-plan-headings th.col1  {
+  margin: 0 2% 0 0;
+  padding: 0 0 0 0;
+  width: 17%;
+}
+
+body.page-survey  div.sln-survey-page-num-4  table.action-plan-headings th.col2,
+body.sln-survey-form-self  div.sln-survey-page-num-9 table.action-plan-headings th.col2 {
+  width: 65%;
+  margin: 0;
+  padding: 0;
+}
+
+body.page-survey  div.sln-survey-page-num-4 table.action-plan-headings th.col3,
+body.sln-survey-form-self  div.sln-survey-page-num-9 table.action-plan-headings th.col3 {
+  margin: 0 2% 0 0;
+  padding: 0 0 0 0;
+
+}
+
+body.page-survey  div.sln-survey-page-num-4 div.webform-layout-box,
+body.sln-survey-form-self div.sln-survey-page-num-9 div.webform-layout-box  {
+}
+
+body.page-survey  div.sln-survey-page-num-4 div.webform-layout-box div.webform-component-markup,
+body.sln-survey-form-self div.sln-survey-page-num-9 div.webform-layout-box div.webform-component-markup  {
+  font-weight: bold;
+  margin: 0 2% 0 0;
+  padding: 0 0 0 0;
+  width: 15%;
+}
+
+body.page-survey  div.sln-survey-page-num-4 div.webform-layout-box div.webform-component-markup p ,
+body.sln-survey-form-self div.sln-survey-page-num-9 div.webform-layout-box div.webform-component-markup p {
+  font-weight: bold;
+  margin: 0 2% 0 0;
+  padding: 25px 0 0 0;
+}
+
+body.page-survey  div.sln-survey-page-num-4 div.webform-component-textarea ,
+body.sln-survey-form-self div.sln-survey-page-num-9 div.webform-component-textarea {
+  display: inline-block;
+  width: 65%;
+  margin: 0;
+  padding: 0;
+}
+
+body.page-survey  div.sln-survey-page-num-4 div.webform-component-textarea  textarea.form-textarea ,
+body.sln-survey-form-self div.sln-survey-page-num-9 div.webform-component-textarea  textarea.form-textarea  {
+  margin: 0;
+  padding: 0;
+}
+
+body.page-survey  div.sln-survey-page-num-4  div.webform-component-select,
+body.sln-survey-form-self div.sln-survey-page-num-9 div.webform-component-select  {
+  display: inline-block;
+  margin: 0 0 0 2%;
+  padding: 25px 0 0 0;
+}
+
+/* submission report pdf link and description text */
+
+p.sln-pdf-link {
+  color: white;
+  display: inline-block;
+
+  background-image: -ms-linear-gradient(bottom, #27B7F6 0%, #0F3F78 100%);
+  background-image: -moz-linear-gradient(bottom, #27B7F6 0%, #0F3F78 100%);
+  background-image: -o-linear-gradient(bottom, #27B7F6 0%, #0F3F78 100%);
+  background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #27B7F6), color-stop(1, #0F3F78));
+  background-image: -webkit-linear-gradient(bottom, #27B7F6 0%, #0F3F78 100%);
+  background-image: linear-gradient(bottom, #27B7F6 0%, #0F3F78 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#27B7F6', endColorstr='#0F3F78');
+}
+
+p.sln-pdf-link a {
+  color: white;
+  display: inline-block;
+  padding: 3px 6px;
+}
+
+.sln-pdf-link-description {
+  font-size: 80%;
+}
+
+body.page-slnsurvey-submission-report h1#page-title {
+  display: none;
+}
+
+
+/*body.page-slnsurvey-submission-report*/
+h2.sln-subheading {
+  color: #aa0000;
+  font-variant: small-caps;
+  padding: 40px 0 10px 0;
+}
+
+div.sln-resources ul  {
+  margin-left: 30px;
+}
+
+div.sln-resources ul  li {
+  list-style: disc;
+  padding: 5px;
+}
+
+/* user account settings */
+
+#user-profile-form #edit-contact {
+  display: none;
+}
+
+/*.webform-component--introduction {
+  text-align: center;
+}*/
+
+/*.webform-component--sign-in {
+  text-align: center;
+}*/
+
+/*
+.webform-progressbar-page {
+  cursor: pointer;
+}
+.webform-progressbar-page:hover {
+  color: #027ac6;
+}
+*/
+
+body.page-survey  div.form-actions,
+div.webform-submission div.form-actions,
+article.node-sln-survey  div.form-actions {
+  text-align: center;
+}
+
+/* print, print_pdf, next and prev submission links: */
+body.page-node-submission ul.webform-submission-actions,
+body.page-node-submission div.webform-submission-navigation,
+body.page-node-submission-edit div.webform-submission-navigation {
+  display: none;
+}
+
+/*
+.resources ul {
+  list-style-type: decimal;
+}
+
+.resources .reference {
+  font-style: 16pt Georgia;
+}
+*/
+
+div.sln-data-entry div,
+div.sln-data-entry div * {
+  margin-top: 1px;
+  margin-bottom: 1px;
+}
+
+/******/
+article.node-sln-survey div.webform-component--copyright {
+  text-align: right;
+}
+
+.sln-survey-body {
+  text-align: center;
+  padding: 0 50px 50px 50px;
+}
+
+.sln-survey-version {
+  font-size: 80%;
+}
+
+.sln-survey-copyright {
+  text-align: right;
+  font-size: 80%;
+}
+
+body.node-type-page article.node ul li {
+  list-style: disc;
+  padding: 5px;
+}
+
+/* json chart related styles */
+
+#sln-radar-legend ul.radar-legend {
+  list-style: none;
+}
+
+#sln-radar-legend ul.radar-legend li span {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin: 0 10px 0 0;
+}
+
+canvas#sln-radar-canvas {
+}
+
+/* tables */
+
+table.sln-submitter-info {
+  width: 40%;
+  border: solid thin black;
+}
+
+table.sln-summary-radar-table {
+  font-size: 80%;
+  margin: 0 auto;
+  width: 80%;
+}
+
+table.sln-summary-radar-table td {
+  text-align: center;
+}
+
+table.sln-submitter-info,
+table.sln-action-map-table,
+table.sln-compare-table,
+table.sln-skills-table {
+  /*border: solid thin black;*/
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+}
+
+table.sln-action-map-table tr.headings,
+table.sln-action-map-table tr.sln-action-plan-total-score,
+table.sln-submitter-info tr,
+table.sln-action-map-table,
+table.sln-compare-table tr,
+table.sln-skills-table tr {
+  background-color: white;
+}
+
+table.sln-summary-radar-table th,
+table.sln-360-project-action-data th,
+table.sln-action-map-table th,
+table.sln-compare-table th,
+table.sln-skills-table th {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  text-align: center;
+  color: yellow;
+  background-color: black;
+}
+
+table.sln-summary-radar-table tr,
+table.sln-action-map-table tr,
+table.sln-submitter-info tr,
+table.sln-compare-table tr,
+table.sln-skills-table tr {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  background-color: white;
+}
+
+table.sln-summary-radar-table td,
+table.sln-360-project-action-data td,
+table.sln-submitter-info td,
+table.sln-action-map-table td,
+table.sln-compare-table td,
+table.sln-skills-table td {
+  border: solid thin black;
+  /*border-spacing: 2px;
+  border-collapse: separate;*/
+  background-color: transparent;
+}
+
+table.sln-submitter-info td:first-child,
+table.sln-skills-table td:first-child {
+  width: 20%;
+}
+
+tr.sln-action-plan-legend {
+  font-size: 80%;
+}
+
+
+table.sln-360-project-action-data .strength,
+table.sln-action-map-table .strength {
+  background-color: green;
+  color: white;
+}
+
+
+table.sln-360-project-action-data .weakness ,
+table.sln-action-map-table .weakness {
+  background-color: red;
+  color: white;
+}
+
+tr.sln-action-plan-legend span.weakness,
+tr.sln-action-plan-legend span.strength {
+  padding: 3px 5px;
+}
+
+div.emptypagebreak {
+  display: none;
+}
+
+table.sln-submission-plans-table {
+ /*width: 100%;*/
+  table-layout:fixed;
+  border: solid thin black;
+}
+
+table.sln-submission-plans-table th {
+  background-color: black;
+  color: yellow;
+  text-align: center;
+}
+
+table.sln-submission-plans-table td {
+  /*width: 20%;*/
+  border: solid thin black;
+  text-align: center;
+}
+
+table.sln-submission-plans-table td.question-action-plan {
+  /*width: 60%; */
+  /*word-wrap: break-word;*/
+  /*width: 500px;*/
+  text-align: left;
+}
+
+table.sln-submission-plans-table td.question-action-plan p.action-plan {
+  /*width: 500px;*/ /* this will cause overflow of cell */
+  /*background-color: tan;*/
+}
+
+table.sln-submission-plans-table col.skill {
+  /*background-color: rgba(0, 0, 255, .25);*/
+  width: 15%;
+  text-align: center;
+}
+
+table.sln-submission-plans-table col.action {
+  /*background-color: rgba(255, 0, 0, .25);*/
+  width: 70%;
+  /*text-align: left;  */
+}
+
+table.sln-submission-plans-table col.term {
+  /*background-color: rgba(0, 255, 0, .25);*/
+  width: 15%;
+  text-align: center;
+}
+
+table.sln-submission-plans-table span.question {
+  font-size: 80%;
+  font-weight: bold;
+}
+
+table.sln-submission-plans-table span.response {
+  padding-left: 20px;
+  font-size: 80%;
+}
+
+/****** efficiency */
+body.page-survey div.eff-supervisor-wrapper label,
+body.sln-survey-form-supervisor div.eff-supervisor-wrapper label {
+  font-weight: normal;
+  display: inline-block;
+  width: 50%;
+  padding: 0 0px 5px 0;
+}
+
+body.page-survey div.eff-observer-wrapper label,
+body.sln-survey-form-observer div.eff-observer-wrapper label {
+  font-weight: normal;
+  display: inline-block;
+  width: 50%;
+  padding: 0 0px 5px 0;
+}
+
+/*body.page-survey div.eff-observer-wrapper select,
+body.sln-survey-form-observer div.eff-observer-wrapper select {
+  position: relative;
+  top: -20px;
+}*/
+
+body.page-survey div.eff-self-wrapper label,
+body.sln-survey-form-self div.eff-self-wrapper label {
+  font-weight: normal;
+  display: inline-block;
+  width: 50%;
+  padding: 0 0px 5px 0;
+}
+
+/*
+body.page-dashboard div.view-user-survey-submissions table.views-table thead {
+
+  display: block;
+  border: solid thin black;
+  width: 100%;
+}
+
+body.page-dashboard div.view-user-survey-submissions table.views-table  tbody {
+  height: 300px;
+  overflow-y: scroll;
+  display: block;
+  border: solid thin black;
+  width: 100%;
+}
+*/
+
+fieldset.webform-submission-info {
+  display: none;
+}
+
+.field-slideshow-pager a {
+  display: inline-block;
+  padding: 0 5px;
+}
+
+#field-slideshow-1-wrapper {
+  margin: 0 auto;
+  width: 800px;
+}
+
+.field-slideshow-pager a.activeSlide {
+  color: black;
+  font-weight: bold;
+}
+
+a.sln-download-pdf {
+  background-image: url(./images/pdf-icon-transparent.gif);
+  width: 20px;
+  height: 19px;
+  display: inline-block;
+}
+
+a.sln-download-pdf span {
+  font-size: 80%;
+  display: none;
+}
+
+body.role-anonymous-user nav.breadcrumb, 
+body.role-anonymous-user h1#page-title {
+  display: none;
+}
+
+table.sln-admin-project-submissions th,
+table.sln-project-surveys-listing th,
+table.sln-360-report-results th ,
+table.sln-360-report-compare th {
+  text-align: left;
+}
+
+.page-node-add-sln-project-180 .vertical-tabs,
+.page-node-add-sln-project-360 .vertical-tabs,
+.node-type-sln-project-180.page-node-edit .vertical-tabs ,
+.node-type-sln-project-360.page-node-edit .vertical-tabs {
+  display: none;
+}
+
+ul.radar-legend li {
+  display: inline-block;
+}
+
+ul.sln-chart-legend {
+}
+
+ul.sln-chart-legend li {
+  display: inline-block;
+  padding: 0 10px;
+}
+
+table.sln-chart-legend {
+  border: none;
+  width: 420px;
+  margin: 0 auto;
+}
+
+table.sln-chart-legend tr,
+table.sln-chart-legend tbody {
+  border: none;
+}
+
+table.sln-chart-legend td {
+  text-align: center;
+  border: none;
+}
+
+.sln-chart-legend  div {
+  display: inline-block;
+  width: 140px;
+  text-align: center;
+}
+
+p.sln-action-map-directions .self,
+.sln-chart-legend .self span.color {
+  color: #f00;
+  font-weight: bold;
+}
+p.sln-action-map-directions .observers,
+.sln-chart-legend .observers span.color {
+  color: #00b050;  
+  font-weight: bold;
+}
+p.sln-action-map-directions .supervisor,
+.sln-chart-legend .supervisor span.color {
+  color: #00f;
+  font-weight: bold;
+}
+
+ul.sln-project-report-action-directions {
+  margin: 0 0 0 20px;
+}
+
+ul.sln-project-report-action-directions li {
+  list-style: disc;
+  padding: 0 0 10px 10px;
+}
+
+div.sln-project-report-chart {
+  text-align: center;
+}
+
+td.question-action-plan span.response,
+td.question-action-plan span.question {
+  font-size: 120%;
+  color: #888;
+}
+
+td.question-action-plan p.action-plan {
+  font-weight: bold;
+}
+
+div.field-name-field-project-subject-token,
+div.field-name-field-project-supervisor-token,
+div.field-name-field-project-observer-token {
+  display: none;
+}
+
+div.field-name-field-project-subject-name,
+div.field-name-field-project-supervisor-name,
+div.field-name-field-project-observer-name  {
+ display: inline-block;
+ width: 30%;
+}
+
+div.field-name-field-project-subject-email,
+div.field-name-field-project-supervisor-email,
+div.field-name-field-project-observer-email  {
+ display: inline-block;
+ /*width: 30%;*/
+ margin-left: 10px;
+}
+
+/* make chart responsive */
+.pchart_ajax img {
+  width: 90%;
+}
+
+fieldset#edit-field-messaging-sup-message-und-0-format,
+fieldset#edit-field-messaging-obs-message-und-0-format,
+fieldset#edit-field-messaging-subject-message-und-0-format,
+fieldset#edit-message-observer-format,
+fieldset#edit-message-supervisor-format,
+fieldset#edit-message-subject-format {
+  display: none;
+}
+
+div.sln-project-message-preview {
+  background-color: #ffffea;
+  padding: 10px 30px 30px 30px;
+  border: solid thin black;
+}
+
+ul.sln-project-message-preview-item {
+ border: solid thin black;
+}
+
+.number {
+  text-align: center;
+}
+
+.translation {
+
+}
+
+.sln-fill {
+  width: 100%;
+}
+
+.sln-wrapper-plain  label {
+  font-weight: normal;
+}
+
+.webform-component-markup {
+  margin: 0;
+  padding: 0;
+}
+
+
+

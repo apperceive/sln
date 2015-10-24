@@ -1,0 +1,1031 @@
+<?php
+/**
+ * @file
+ * Drupal 7 version of slnsite module.
+ *
+ * Only constants, includes and hooks defined here
+ *
+ */
+
+/**
+ * Constants used in conditional logic.
+ */
+
+// vocabulary machine names
+define('SLN_SKILLS', 'sln_skills');
+define('SLN_TEMPLATES', 'sln_templates');
+define('SLN_BENCHMARK_TYPES', 'sln_benchmark_types');
+define('SLN_BENCHMARKS', 'sln_benchmarks');
+define('SLN_SURVEY_PARTICIPANT_TYPE', 'sln_survey_participant_type');
+
+// term id's
+define('SLN_SURVERY_SECTION_1', 98);
+define('SLN_SURVERY_SECTION_ACTION_PLAN', 68);
+define('SLN_TEMPLATE_SLQ_FREE_RESOURCES', 104);
+define('SLN_TEMPLATE_SLQ_SUBMISSION_REPORT', 103);
+define('SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT', 108);
+define('SLN_INSTRUMENT_SLQ', 18);
+define('SLN_INSTRUMENT_STQ', 17);
+define('SLN_SUBJECT_SELF', 62);
+
+// instrument specific term id;s
+define('SLN_SLQ_ALL_SCORES', 30);
+define('SLN_STQ_ALL_SCORES', 31);
+
+// global constants
+define('SLN_UNSCORED_NEUTRAL', 3);
+define('SLN_MIN_ACTION_PLANS_REQUIRED', 6);
+
+// instrument specific global constants
+define('SLN_SLQ_UNSCORED_START', 36);    // NOTE: currently the last 9 items are not scored or categorized as skills
+define('SLN_STQ_UNSCORED_START', 99999);
+
+define('SLN_PROJECT_TYPE_CS', 111);
+define('SLN_PROJECT_TYPE_360', 106);
+define('SLN_PROJECT_TYPE_180', 107);
+define('SLN_PROJECT_TYPE_DEFAULT', 106);
+
+
+module_load_include('inc', 'node', 'node.pages');           // Note: this is required for using node_object_prepare()
+module_load_include('inc', 'uif', 'uif.admin');             // user import dependence
+
+module_load_include('inc', 'slnsite', 'slnsite.pages');
+module_load_include('inc', 'slnsite', 'slnsite.webform');
+module_load_include('inc', 'slnsite', 'slnsite.utils');
+module_load_include('inc', 'webform', 'includes/webform.submissions');
+
+module_load_include('inc', 'slnsite', 'slnsite.test');
+
+
+////////  HOOKS
+
+/**
+ * Implements hook_menu.
+ */
+function slnsite_menu() {
+  $items = array();
+
+  $items['survey/%'] = array(
+    'title' => 'Strategic Leader Network Survey Submission',
+    'page arguments' => array(1),     // survey participant token
+    'page callback' => '_slnsite_submission_router',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['project/%'] = array(
+    'title' => 'Strategic Leader Network Project Survey Sign In',
+    'page arguments' => array(1),     // project short code
+    'page callback' => '_slnsite_project_router',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+  );
+  
+  $items['report/%slnsite_project'] = array(
+    'title' => 'Strategic Leader Network Survey Assessment Report',
+    'page arguments' => array(1),     // subject token or project id
+    'page callback' => '_slnsite_project_report',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  // TODO: change to use projectid or remove completely (replaced by /report)
+  // note that this url is used in templates 
+  // such as views-view-field--project-submissions--nothing.tpl.php
+  // and views-view-field--user-survey-submissions--nothing-1.tpl.php
+  $items['slnsurvey/submission/report/%/%'] = array(
+    'title' => 'Strategic Leader Network Survey',
+    //'page arguments' => array(3,4),
+    //'page callback' => '_slnsite_submission_report_form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_submission_report_form', 3, 4),
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['sln'] = array(
+    'title' => 'Strategic Leader Network Survey',
+    'page callback' => '_slnsite_project_page',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['dashboard'] = array(
+    'title' => 'Strategic Leader Network Dashboard',
+    'page callback' => '_slnsite_dashboard_page',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  /*
+  $items['dashboard/inbox'] = array(
+    'title' => 'Inbox',
+    'page callback' => '_slnsite_dashboard_page',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 20,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['dashboard/completed'] = array(
+    'title' => 'Completed Items',
+    'page callback' => '_slnsite_dashboard_page',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 30,
+    'file' => 'slnsite.pages.inc',
+  );
+  */
+
+  $items['dashboard/projects'] = array(
+    'title' => 'Projects',
+    'page callback' => '_slnsite_dashboard_page',
+    //'access callback' => TRUE,        // TODO: assume auth role minimum
+    'access callback' => '_slnsite_dashboard_page_projects_access',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 10,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['admin/config/slnsite'] = array(
+    'description' => 'SLN site option settings.',
+    'title' => 'SLN Site Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'slnsite.admin.pages.inc',
+  );
+
+  $items['admin/config/slnsite/settings'] = array(
+    //'description' => 'SLN site option settings.',
+    'title' => 'SLN Survey Settings',
+    //'page callback' => 'drupal_get_form',
+    //'page arguments' => array('_slnsite_admin_settings'),
+    //'access arguments' => array('administer site configuration'),
+    //'file' => 'slnsite.admin.pages.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/config/slnsite/email'] = array(
+    'description' => 'SLN Email Settings Configuration.',
+    'title' => 'SLN Email Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_email_settings'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'slnsite.admin.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5,
+    );
+
+  $items['admin/config/slnsite/formgen'] = array(
+    'description' => 'SLN form generation tool.',
+    'title' => 'SLN Form Generation',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_admin_formgen'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'slnsite.admin.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
+
+  $items['slnsite_base_title/js'] = array(
+    //'title' => 'Autocomplete node title',
+    'page callback' => '_slnsite_base_title_js',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.js.inc',
+  );
+
+  // TODO: params for instrument, subject, project?, self|sup|obs, specific or all cases?
+  $items['sln/project/compare/json/%'] = array(
+    'title' => 'JSON output of comparison scores',
+    'page callback' => '_slnsite_project_submissions_compare_json',
+    'page arguments' => array(4),
+    'access callback' => TRUE,        // TODO: limit to admin?
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['mandrillapp/webhook'] = array(
+    'title' => 'JSON webhook for Mandrill.com',
+    'page callback' => '_slnsite_project_mandrillapp_webhook',
+    'page arguments' => array(4),
+    'access callback' => TRUE,        // TODO: limit to admin?
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%/import/%'] = array(
+    'title' => 'Import E-Mail Addresses',
+    'access callback' => TRUE,        // TODO: limit to admin?
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_project_import', 1, 3),
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['msstest'] = array(
+    'title' => 'MSS Test Page',
+    'page callback' => '_slnsite_msstestpage',
+    'access callback' => TRUE,        // TODO: limit to admin?
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.test.inc',
+  );
+
+/*
+  // Node page tabs.
+  $items['node/%slnsite_project/view/view'] = array(
+    'title' => 'Project Summary View',
+    //'page callback' => '_slnsite_project_survey_submissions',
+    'page arguments' => array(1),
+    //'access callback' => '_slnsite_project_survey_submissions_access',
+    //'access arguments' => array(1),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/view/submissions'] = array(
+    'title' => 'Project Survey Submissions',
+    'page callback' => '_slnsite_project_survey_submissions',
+    'page arguments' => array(1),
+    //'page callback' => 'drupal_get_form',
+    //'page arguments' => array('_slnsite_project_survey_submissions', 1),
+    'access callback' => '_slnsite_project_survey_submissions_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/edit/edit'] = array(
+    'title' => 'Edit',
+    //'page callback' => '_slnsite_project_survey_submissions',
+    'page arguments' => array(1),
+    //'access callback' => '_slnsite_project_survey_submissions_access',
+    //'access arguments' => array(1),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/edit/assignments'] = array(
+    'title' => 'Project Survey Assignments',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_project_assignment_form', 1),
+    'access callback' => '_slnsite_project_survey_assignments_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/view/participants'] = array(
+    'title' => 'Project Participants',
+    'page callback' => '_slnsite_project_participants_listing',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_participants_listing_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  */
+
+  // 360 observers import
+  $items['node/%slnsite_project/import'] = array(
+    'title' => 'Participants',
+    'page callback' => '_slnsite_project_import_participants',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/messaging'] = array(
+    'title' => 'Messaging',
+    'page callback' => '_slnsite_project_messaging',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/messaging/messaging'] = array(
+    'title' => 'Messaging',
+    'page callback' => '_slnsite_project_messaging',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/messaging/history'] = array(
+    'title' => 'Messaging History',
+    'page callback' => '_slnsite_project_messaging_history',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/submissions'] = array(
+    'title' => 'Surveys',
+    'page callback' => '_slnsite_project_submissions_listing',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_submissions_listing_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 4,
+    'file' => 'slnsite.pages.inc',
+  );
+
+
+  $items['node/%slnsite_project/report'] = array(
+    'title' => 'Report',
+    'page callback' => '_slnsite_project_report',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  /*
+  $items['node/%slnsite_project/results'] = array(
+    'title' => 'Results',
+    'page callback' => '_slnsite_project_results',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'slnsite.pages.inc',
+  );
+
+  $items['node/%slnsite_project/plan'] = array(
+    'title' => 'Action Plan',
+    'page callback' => '_slnsite_project_plan',
+    'page arguments' => array(1),
+    'access callback' => '_slnsite_project_360_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'slnsite.pages.inc',
+  );
+  */
+  // TODO: add pages for researchers, analytics/downloads
+
+
+  $items['admin/content/projects'] = array(
+    'title' => 'Project Submissions',
+    'page callback' => '_slnsite_admin_project_submissions',
+    //'page arguments' => array(1),
+    //'page arguments' => array(),
+    //'access callback' => '_slnsite_project_360_access',
+    'access callback' => TRUE,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 3,
+    'file' => 'slnsite.admin.pages.inc',
+  );
+
+  /*
+  $items['user/surveys'] = array(
+    'title' => 'Surveys',
+    //'page callback' => '_slnsite_survey_email',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('_slnsite_survey_email'),
+    //'page arguments' => array(1),
+    'access callback' => 'user_is_anonymous',
+    //'access callback' => '_slnsite_project_participants_listing_access',
+    //'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+    'file' => 'slnsite.pages.inc',
+  );
+  */
+
+  return $items;
+} // slnsite_menu
+
+
+/**
+ * Menu loader callback. Load a webform node if the given nid is a webform. 
+ * Allow token to act as report key too?
+ * does this allow sup and obs to see results?
+ * validate that token is subject only?
+ */
+function slnsite_project_load($nid) {
+  if (!is_numeric($nid)) {
+    $nid = _slnsite_project_token($nid);    // $nid is token?
+    if (!$nid)
+      return FALSE;
+  }
+  $node = node_load($nid);
+  //if (is_object($node) && in_array($node->type, array('sln_project', 'sln_project_360', 'sln_project_180')))
+  if (is_object($node) && in_array($node->type, array('sln_project_360')))
+    return $node;
+  return FALSE;
+} // slnsite_project_load
+
+/**
+ * Implements hook_mail().
+ */
+function slnsite_mail($key, &$message, $params) {
+
+  switch ($key) {
+    case 'surveys':
+
+      break;
+    case 'survey':
+      //$msg = variable_get('ja_email_new_appraisal', '');
+      //$sub = "You have a new appraisal";
+      // mandrill.com metadata header is a "JSON-encoded set of key-value pairs as the value"
+      // http://mandrill.zendesk.com/entries/21786413
+      // "token" defined in mandrill dash
+      // add project id here
+      if (array_key_exists('token', $params))
+        $message['headers']['X-MC-Metadata'] = '{"token": "' .$params['token'] . '"}';
+      if (array_key_exists('project_nid', $params))
+        $message['headers']['X-MC-Metadata'] = '{"project": "' .$params['project_nid'] . '"}';
+      //$message['headers']['X-MC-Tags'] = 'slq,group?'; // instrument
+      break;
+    default:
+      //$msg = '';
+      //$sub = '';
+      // todo: log error
+      break;
+  } // switch
+
+  // note: to may be altered below
+  $message['to'] = $params['to'];
+  $message['from'] = $params['from'];
+  $message['subject'] = $params['subject'];
+  $message['headers']['From'] = $params['from'];
+  $message['headers']['Sender'] = $params['from'];
+  $message['headers']['Sender'] = $params['from'];
+  //$message['headers']['Reply-To'] = $params['reply_to'];
+
+  // check for test emails
+  $extra = "";
+  $test = trim(variable_get('slnsite_test_emails_list', ""));
+  if (drupal_strlen($test)) {
+    $extra = "<i><strong>NOTE:</strong> e-mail testing is on. this e-mail would normally go to " . $message['to'] . ". Visit <a href='/admin/config/slnsite/email'>admin/config/slnsite/email</a> to change this.</i>\n\n\n";
+    $message['to'] = $test;
+  }
+  $message['body'][] = $extra . $params['message'];
+
+  //dpm(get_defined_vars());
+
+  watchdog('slnsite', "Email sent to %to with subject %subject and body %body.", array('%to' => $message['to'], '%subject' => $message['subject'], '%body' => $message['body'] ), WATCHDOG_INFO);
+} // slnsite_mail
+
+/**
+ * Implements hook_node_view().
+ */
+function slnsite_node_view($node, $view_mode, $langcode) {
+  global $user;
+  // this appears to be doing nothing
+  if ($view_mode == 'full' && ($node->type == 'sln_project')) {
+    $breadcrumb = array();
+    $breadcrumb[] = l(t('home'), NULL);
+    $breadcrumb[] = l('projects', 'dashboard/projects');
+    drupal_set_breadcrumb($breadcrumb);
+  } // project
+
+  if ($view_mode == 'full' && ($node->type == 'sln_project_360'))
+    _slnsite_project_status_report($node);
+
+
+} // slnsite_node_view
+
+
+// only shows on node page, not other sub-tabs attached to same node
+function slnsite_node_view_alter(&$build) {
+  $node = &$build['#node'];
+  if ($build['#view_mode'] == "full" && $node->type == "sln_survey") {
+    // if (/* project exists */ ) {
+      $breadcrumb = array();
+      $breadcrumb[] = l('Home', '<front>');
+      // $breadcrumb[] = l('xxx', 'url');
+      drupal_set_breadcrumb($breadcrumb);
+    // } // if
+  } // if ($build['#view_mode'] == "full" && $node->type == "sln_survey")
+  //dpm(get_defined_vars());
+} //slnsite_node_view_alter
+
+/**
+ * Implements hook_node_validate().
+ */
+function slnsite_node_validate($node, $form, &$form_state) {
+  if ($node->type == 'sln_project_360') {
+    _slnsite_project_360_validate($node, $form, $form_state);    // calls to form_set_error or just drupal_set_message
+  } // sln_project_360
+} // slnsite_node_validate
+
+
+/**
+ * Implements hook_node_presave().
+ */
+function slnsite_node_presave($node) {
+  if ($node->type == 'sln_project_360') {
+    _slnsite_project_360_presave($node);
+  } // sln_project_360
+
+  //if ($node->type == 'sln_project_180') {
+    //_slnsite_project_180_presave($node);
+  //} // sln_project_180
+
+  // TODO: obsolete?
+  //if ($node->type == 'sln_project') {
+    //_slnsite_project_presave($node);
+  //} // sln_project
+
+  //if ($node->type == 'sln_survey') {
+  //} // sln_survey
+
+} // slnsite_node_presave
+
+// Programmatically modifying a webform
+// However, the structure of the node is different from your average form and can catch you out.
+// Example: alter question q1
+/**
+ * Implements hook_form_alter.
+ */
+function slnsite_form_alter(&$form, &$form_state, $form_id) {
+
+  // hide contact form selection in user edit tab
+  if ($form_id == 'user_profile_form') {
+    $form['contact']['#access'] = FALSE;
+  }
+
+  // stop IOS/mobile capitalization and correction on login names (name field)
+  if (in_array($form_id, array('user_login', 'user_register_form'))) {
+    $form['name']['#attributes']['autocapitalize'] = 'none';
+    $form['name']['#attributes']['autocorrect'] = 'off';
+    $form['name']['#attributes']['autocomplete'] = 'off';
+  }
+
+  // stop IOS/mobile capitalization and correction on email addresses (mail field)
+  if (in_array($form_id, array('user_register_form', 'multiple_email_manage'))) {
+    $form['mail']['#attributes']['autocapitalize'] = 'none';
+    $form['mail']['#attributes']['autocorrect'] = 'off';
+    $form['name']['#attributes']['autocomplete'] = 'off';
+  }
+
+  
+  if ($form_id == 'sln_project_360_node_form') {
+    
+    //dpm(get_defined_vars());
+    //dpm($form['field_project_type'][LANGUAGE_NONE]['#default_value'][0]);
+    //dpm($form['field_project_observers']);
+    
+    $node = $form['#node'];
+    $project_type = SLN_PROJECT_TYPE_360;
+    if (isset($node->field_project_type) && count($node->field_project_type))
+       $project_type = $node->field_project_type[LANGUAGE_NONE][0]['tid'];
+
+    if ($project_type != SLN_PROJECT_TYPE_360) {
+      //$form['field_project_observers'][LANGUAGE_NONE][0]['#title'] = t("Participants");
+      $form['field_project_observers'][LANGUAGE_NONE]['#title'] = t("Participants");
+      $form['field_project_observers'][LANGUAGE_NONE]['#description'] = str_replace(t("observers"), t("participants"), $form['field_project_observers'][LANGUAGE_NONE]['#description']);
+      unset($form['field_project_subject']);
+      unset($form['field_project_supervisor']);
+    } // SLN_PROJECT_180
+  } // sln_project_360_node_form
+
+  // add participant/user import button to project form edit
+  // obsolete?
+  if ($form_id == 'sln_project_node_form') {
+    //$form['contact']['#access'] = FALSE;
+    $form['field_project_participants']['sln_project_particpant_import'] = array(
+      '#type' => 'submit',
+      '#name' => '_slnsite_participants_import',
+      '#value' => 'Import Emails...',
+      //'#submit' => array('_slnsite_participants_import_submit'),
+      '#submit' => array('_slnsite_batch_import_users_submit'),
+      '#attributes' => array('class' => array('slnsite_participants_import')),
+    );
+    //dpm(get_defined_vars());
+  }
+
+    /*
+  if (strpos($form_id, 'webform_client_form_') !== FALSE) {
+    // dpm(array($form_id, $form, $form_state));
+
+    // get appropriate starting count and question array
+    // use case switch on node type
+
+    $node = $form['#node'];
+    $nid = $node->nid;
+    $type = $node->type;
+
+    if ($type == 'sln_survey') {
+      $instrument_type = $node->field_sln_survey_instrument[LANGUAGE_NONE][0]['tid'];
+      $subject_type = $node->field_sln_survey_subject[LANGUAGE_NONE][0]['tid'];
+      //$section_type = $node->field_sln_survey_section[LANGUAGE_NONE][0]['tid'];
+    }
+
+    //dpm(get_defined_vars());
+    switch ($type) {
+      case 'xxxsln_survey':
+        //$cnt = 1;
+        //$questions = _slnsite_survey_questions_enumeration($nid);
+        break; // sln_survey
+      case 'sln_demographics_webform':
+        // get count of associated sln_survey
+
+        //TODO: how get survey node?
+
+        //$cnt = 1; //_slnsite_survey_question_count($surveynodeid) + 1;
+        //$questions = _slnsite_survey_demographic_enumeration($nid);
+        break; // sln_demographics_webform
+      case 'sln_planning_webform':
+        //$surveynodeid = $node->field_sln_survey_parent[LANGUAGE_NONE][0]['nid'];
+        //$cnt = 1;
+        //$questions = _slnsite_survey_planning_enumeration($nid);
+        break; // sln_planning_webform
+      default:
+        return;   // unrecognised webform type
+    } // switch
+
+  } // if webform_client_form_
+    */
+
+  // display scoring type for (all) webform components
+  // TODO: refactor this out to smaller functions in webform
+  // REFACTOR TO: function _slnsite_alter_webform_component_edit_form(&$form)
+  if ($form_id == 'webform_component_edit_form') {
+    $cid = NULL;
+    $surveynode = $form['#node'];
+    if ($surveynode->type == 'sln_survey') {
+      $type = $form['type']['#value'];
+      $required = _slnsite_array_keys_exist($form, 'validation', 'required', '#default_value') ? $form['validation']['required']['#default_value'] : FALSE;
+
+      $nid = $form['nid']['#value'];
+      $cid = $form['cid']['#value'];
+      
+      if (($type == 'select') && $required) {
+        // get all scoring categories
+        $skillsopts = _slnsite_select_options_from_vocabulary(SLN_SKILLS, array(0 => 'None'));
+        
+        // TODO: replace this with using webform extras?
+
+        $sql = "SELECT sid FROM {slnsite_component_scoring} WHERE nid = :nid AND cid = :cid";
+        $q = db_query($sql, array(':nid' => $nid, ':cid' => $cid));
+        $skillvalue = $q->fetchField();
+
+        // TODO: refactor this out to _slnsite_scoring_categories_element($catsnode) { return $element; }
+        $element = array(
+          '#type' => 'fieldset',
+          '#title' => 'SLN Scoring',
+          '#collapsible' => TRUE,
+          '#collapsed' => FALSE,
+          '#weight' => 6,
+          'scoring_category' => array(
+            '#type' => 'select',
+            '#title' => t('Scoring Category'),
+            '#default_value' => $skillvalue ? $skillvalue : '',
+            '#options' => $skillsopts,
+            '#description' => t('Choose a SLN scoring category (optional). If selected, this question will contribute to the selected scoring category scores in reports.'),
+            '#weight' => -1,
+            '#parents' => array(0 => 'scoring'),
+          ), // sub array
+        );  // array
+
+        $form['scoring'] = $element;
+        $form['#submit'][] = '_slnsite_component_scoring_category_submit'; // Add a submit handler
+
+        //dpm(get_defined_vars());
+        
+      } // (($type == 'select') && $required)
+
+      // add translation element
+      
+      //dpm(get_defined_vars());
+      // note: test for xlate in extra, some surveys do not have it
+      $component = NULL;
+      if ($cid && array_key_exists($cid, $surveynode->webform['components']))
+        $component = $surveynode->webform['components'][$cid];
+      $xlate = "";
+      if ($component && array_key_exists('translations' ,$component['extra']))
+        $xlate = $component['extra']['translations'];
+      $element2 = array(
+        '#type' => 'fieldset',
+        '#title' => 'SLN Label Translations',
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+        '#weight' => -50,
+        'translations' => array(
+          '#type' => 'textarea',
+          '#title' => t('Label translations'),
+          '#default_value' => $xlate ? $xlate : "",
+          '#description' => t('Optional. Enter one translation per line in the format lang|text, where lang is the 2 character language code and text is the label for that language. Example: ar|رحب بالتفاوض مع الاخرين لاتمام المهات'),
+          '#weight' => 0,
+          '#parents' => array('extra', 'translations'),
+        ), // sub array
+      );  // array
+      
+      $form['extra']['translations'] = $element2;
+
+      
+      
+    } // if webform_component_edit_form
+  }  // surveynode type is sln_survey
+
+
+  //dpm(get_defined_vars());
+
+}  // slnsite_form_alter
+
+/**
+ * Implements hook_webform_select_options_info().
+ */
+function slnsite_webform_select_options_info() {
+  $items = array();
+  // build pre-defined options from select_options vocabulary terms
+  $name = 'sln_select_options';
+  $vocabulary = taxonomy_vocabulary_machine_name_load($name);
+  $terms = taxonomy_get_tree($vocabulary->vid, 0, NULL, TRUE);
+  //dpm($terms);
+  foreach ($terms as $term) {
+    $items[$term->field_select_options_machinename[LANGUAGE_NONE][0]['value']] = array(
+      'title' => t($term->name),
+      'options callback' => '_slnsite_webform_select_options_callback',
+      'options arguments' => _slnsite_select_options_from_term($term),
+      'file' => 'slnsite.utils.inc',
+    );
+  }  // foreach
+  return $items;
+} // slnsite_webform_select_options_info
+
+// from webform api, remove example select options
+/**
+ * Implements XXX.
+ */
+function slnsite_webform_select_options_info_alter(&$items) {
+  // Remove the days of the week options.
+  unset($items['days']);
+  unset($items['countries']);
+  unset($items['united_states']);
+} // slnsite_webform_select_options_info_alter
+
+/**
+ *
+ * Implements hook_user_view. SELECT email on profile account page
+ *
+ */
+function slnsite_user_view($account, $view_mode, $langcode) {
+  global $user;
+
+  if (_slnsite_user_has_director_role($user)) {
+    $mail = $account->mail;
+    $account->content['Personal information']['mail'] = array(
+      '#type' => 'user_profile_item',
+      '#markup' => "<a href='mailto:$mail'>$mail</a>",
+      '#title' => 'E-Mail',
+      '#weight' => 10,
+      '#attributes' => array('class' => array('sln-profile-mail')),
+    );
+  } // if directory
+  // dpm(get_defined_vars());
+} // slnsite_user_view
+
+
+
+
+///////////////////////////// NO LONGER USED HOOKS
+
+/**
+ * Alter links in the active trail before it is rendered as the breadcrumb.
+ *
+ * This hook is invoked by menu_get_active_breadcrumb() and allows alteration
+ * of the breadcrumb links for the current page, which may be preferred instead
+ * of setting a custom breadcrumb via drupal_set_breadcrumb().
+ *
+ * Implementations should take into account that menu_get_active_breadcrumb()
+ * subsequently performs the following adjustments to the active trail *after*
+ * this hook has been invoked:
+ * - The last link in $active_trail is removed, if its 'href' is identical to
+ *   the 'href' of $item. This happens, because the breadcrumb normally does
+ *   not contain a link to the current page.
+ * - The (second to) last link in $active_trail is removed, if the current $item
+ *   is a MENU_DEFAULT_LOCAL_TASK. This happens in order to do not show a link
+ *   to the current page, when being on the path for the default local task;
+ *   e.g. when being on the path node/%/view, the breadcrumb should not contain
+ *   a link to node/%.
+ *
+ * Each link in the active trail must contain:
+ * - title: The localized title of the link.
+ * - href: The system path to link to.
+ * - localized_options: An array of options to pass to url().
+ *
+ * @param $active_trail
+ *   An array containing breadcrumb links for the current page.
+ * @param $item
+ *   The menu router item of the current page.
+ *
+ * @see drupal_set_breadcrumb()
+ * @see menu_get_active_breadcrumb()
+ * @see menu_get_active_trail()
+ * @see menu_set_active_trail()
+ */
+//function slnsite_menu_breadcrumb_alter(&$active_trail, $item) {
+  // Always display a link to the current page by duplicating the last link in
+  // the active trail. This means that menu_get_active_breadcrumb() will remove
+  // the last link (for the current page), but since it is added once more here,
+  // it will appear.
+  /*
+  if (!drupal_is_front_page()) {
+    $end = end($active_trail);
+    if ($item['href'] == $end['href']) {
+      $active_trail[] = $end;
+    }
+  }
+  */
+  /*
+  $insert = array(
+    'title' => 'title',
+    'href' => 'href',
+    'link_path' => '',
+    'localized_options' => array(),
+    'type' => 0,
+  );
+
+  //array_splice($active_trail, 2, 0, $insert);
+  $t1 = array_slice($active_trail, 0, 1, true);
+  $t2 = array('new' => $insert);
+  $t3 = array_slice($active_trail, 1, count($active_trail) - 1, true);
+
+  $t = $t1 + $t2 + $t3;
+  $active_trial = $t;
+  // dpm(get_defined_vars());
+  */
+//} // slnsite_menu_breadcrumb_alter
+
+/**
+ * Implements hook_node_load().
+ */
+function slnsite_node_load($nodes, $types) {
+  //foreach ($nodes as $node) {
+   // note:  arguments are arrays!!!
+  //} // foreach
+} // hook_node_load
+
+/**
+ * Implements hook_node_prepare().
+ */
+function slnsite_node_prepare($node) {
+  //dpm($node);
+  if ($node->type == 'sln_project_360') {
+    _slnsite_project_status_report($node);
+  } // sln_project_360
+} // slnsite_node_prepare
+
+/**
+ * Implements hook_node_update().
+ */
+function slnsite_node_update($node) {
+  if ($node->type == 'sln_project_360') {
+    _slnsite_project_360_update($node);
+  } // sln_project_360
+
+  //if ($node->type == 'sln_survey') {
+  //} // sln_survey
+} // slnsite_node_update
+
+/**
+ * Implements hook_node_insert().
+ */
+function slnsite_node_insert($node) {
+  if ($node->type == 'sln_project_360') {
+    _slnsite_project_360_insert($node);
+  } // sln_project_360
+
+  //if ($node->type == 'sln_survey') {
+  //} // sln_survey
+} // slnsite_node_insert
+
+/**
+ * Implements hook_node_delete().
+ */
+function slnsite_node_delete($node) {
+} // slnsite_node_delete
+
+// obsolete: disable
+/**
+ * Implements hook_views_query_alter(&$view, &$query).
+ */
+/*
+function slnsite_views_query_alter(&$view, &$query) {
+  global $user;
+
+  if ($view->name == "projects_listing") {
+    //$ndx = $query->where[0]['clauses'];
+
+    if (in_array("director", $user->roles)) {
+      // no extra filters
+    }
+    else {
+      //dpm(array($user, $view, $query->where));
+      if (in_array("project manager", $user->roles)) {
+        // D7 from jasite
+        //$query->where[1]['conditions'][2]['value'] = "%" . $user->mail . "%";
+        // obsolete:
+        //$query->where[0]['clauses'][] = "node_data_field_project_manager.field_project_manager_uid = '%s'";
+        //$query->where[0]['args'][] = $user->uid;
+      }
+      else {
+
+
+         // more complex than this. use two views for projects and participation
+        ///$projectnode = NULL;
+        ///if (_slnsite_user_is_project_participant($projectnode)) {
+          ///$query->where[0]['clauses'][] = "node_data_field_project_participants.field_project_participants_uid = '%s'";
+          ///$query->where[0]['args'][] = $user->uid;
+        ///}  // participant
+
+
+      } // project manager
+    }  //director
+
+    //dpm(array($user, $view, $query->where));
+
+  }  // view projects_listing
+
+}  // slnsite_views_query_alter
+*/
+
+/**
+// see also:
+// http://drupal.stackexchange.com/questions/87218/remove-or-hide-view-tab-on-node
+// https://www.drupal.org/node/604850
+xxxfunction XXXslnsite_menu_alter(&$item) {
+  //dpm($item);
+  // Hide the user view tab
+  global $user;
+  if ($user->uid != 1) {
+    $item['user/%user/view']['type'] = MENU_CALLBACK;
+    $item['user/%user/edit']['type'] = MENU_CALLBACK;
+
+  } // $user->uid != 1
+} // slnsite_menu_alter
+ */
+
+
+////////  THEME OVERRIDES
+
+// override theming of form elements to remove colon from end of questions
+// see: http://www.lullabot.com/blog/article/avoiding-templatephp-doom-or-overriding-theme-functions-modules
+/**
+ * Implements XXX.
+ */
+/**
+xxxfunction slnsite_theme_registry_alter(&$theme_registry) {
+  if (!empty($theme_registry['form_element'])) {
+    //$theme_registry['form_element']['function'] = 'slnsite_form_element';
+  }
+} // slnsite_theme_registry_alter
+ */
+
+function slnsite_menu_alter(&$items) {
+  // Example - disable the page at node/add
+  // $items['node/add']['access callback'] = FALSE;
+  global $user;
+  //dpm(get_defined_vars());
+  if (!$user->uid) {
+    $items['user']['type'] = MENU_LOCAL_TASK;
+  }  // if anon
+} // slnsite_menu_alter
+
+
+function slnsite_init() {
+  // check for project short codes
+  $codes = variable_get("sln_project_short_codes", array());
+  $path = strtolower(arg(0));
+  // verify short code
+  if (array_key_exists($path, $codes))
+    drupal_goto("project/" . arg(0)); 
+  
+  // otherwise let drupal handle 
+} // slnsite_init
+
+function slnsite_node_submit($node, $form, &$form_state) {
+  if ($node->type == 'sln_project_360') {
+    _slnsite_project_360_node_submit($node);
+  } // sln_project_360
+}

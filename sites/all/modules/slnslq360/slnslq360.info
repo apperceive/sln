@@ -1,0 +1,7 @@
+name = SLN SLQ 360
+description = SLN SQL 360 surveys and tools.
+package=Strategic Leader Network
+core = 7.x
+files[]=slnslq360.module
+files[]=slnslq360.install
+files[]=slnslq360.pages.inc

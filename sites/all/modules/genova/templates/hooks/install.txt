@@ -1,0 +1,8 @@
+
+/**
+ * Implements hook_install().
+ *
+ */
+function {name}_install() {
+
+}

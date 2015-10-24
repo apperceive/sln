@@ -1,0 +1,37 @@
+<?php
+
+/**
+ * @file
+ * Use reusable value sets as allowed values for fields.
+ */
+
+/**
+ * Implements hook_webform_select_options_info()
+ *
+ * Defines webform option lists
+ */
+function values_webform_webform_select_options_info() {
+  $items = array();
+
+  // Loop through all our value sets and
+  foreach (values_load_all() as $name => $value_set) {
+    $items['values_set_' . $name] = array(
+      'title' => $value_set->title,
+      'options callback' => 'values_webform_webform_select_options',
+      'options arguments' => array('name' => $name),
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * Callback for the select options list
+ * @param  string $value_set_name
+ *         The name of the value set to load
+ * @return array
+ *         An array of optionn of options
+ */
+function values_webform_webform_select_options($component, $flat, $filter, $arguments) {
+  return values_load_options($arguments['name']);
+}

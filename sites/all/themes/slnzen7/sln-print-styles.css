@@ -1,0 +1,316 @@
+/* styles for the print pdf module output */
+
+h2.print-title,
+div.print-site_name,
+div.print-breadcrumb ,
+fieldset.webform-submission-info,
+fieldset.webform-submission-info > legend,
+hr.print-hr {
+  display: none;
+}
+
+/*
+div, p, span {
+  border: dashed thin green;
+  padding: 5px;
+  margin: 5px;
+  min-height: 10px;
+  min-width: 10px;
+}
+
+p {
+  border: dashed thin red;
+}
+
+span {
+  border: dashed thin red;
+  display: inline-block;
+}
+*/
+
+/* old styles from original SLQ */
+
+/*
+*/
+
+html {
+  height: 100%;
+  overflow-y: scroll;
+}
+
+
+body {
+  height: 100%;
+  background: #fff;
+  color: #444;
+  line-height: 1.4;
+  font-size: 145%;
+}
+
+body, input, button, textarea, select {
+  font-family: Arial;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: Georgia;
+}
+pre, tt, code, kbd, samp, var {
+  font-family: "Courier New", Courier, monospace;
+}
+
+h1 {font-size: 1.5em;}
+h2 {font-size: 1.4em;}
+h3 {font-size: 1.3em;}
+h4 {font-size: 1.2em;}
+h5 {font-size: 1.1em;}
+h6 {font-size: 1em;}
+
+h1, h2, h3, h4, h5 {font-weight: normal;}
+
+a:link {color: #cc0000; text-decoration: underline;}
+a:visited {color: #cc0000; text-decoration: underline;}
+a:hover {color: #cc0000; text-decoration: none;}
+a:focus {text-decoration: none;}
+a:focus,:focus {outline: 1px dotted #000;}
+a:active {color: #cc0000; outline: none;}
+
+body, p, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, button, textarea, blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+th {
+  background: #000;
+  color: #ffff00;
+  padding: 5px;
+}
+td {
+  padding: 5px;
+}
+
+fieldset, img {
+  border: 0;
+}
+
+img {vertical-align: bottom;}
+
+ol li {list-style-type: decimal;}
+ul li {list-style-type: disc;}
+ul ul li {list-style-type: circle;}
+ul ul ul li {list-style-type: square;}
+ol ol li {list-style-type: lower-alpha;}
+ol ol ol li {list-style-type: lower-roman;}
+
+sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+legend {
+  color: #000;
+  padding-bottom: .5em;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  text-align: center;
+}
+
+caption {
+  position: absolute;
+  left: -999em;
+}
+
+th {
+  text-align: center;
+}
+
+tbody th {
+  text-align: left;
+}
+
+code {
+  color: #06f;
+}
+
+code, pre {
+  font-size: small;
+}
+
+blockquote, q, em, cite, dfn, i, cite, var, address {
+  font-style: italic;
+}
+
+blockquote p:before, blockquote p:after, q:before, q:after {
+  content: '';
+}
+
+th, strong, dt, b {
+  font-weight: bold;
+}
+
+ins {
+  text-decoration: none;
+  border-bottom: 3px double #333;
+}
+
+del {
+  text-decoration: line-through;
+}
+
+abbr,
+acronym {
+  border-bottom: 1px dotted #333;
+  font-variant: normal;
+}
+
+h1, h2, h3, h4, h5, h6, p, pre, ul, ol, dl, fieldset, address {padding:0 30px;}
+
+dd p, dd pre, dd ul, dd ol, dd dl, li p, li pre, li ul, li ol, li dl, fieldset p, fieldset ul, fieldset ol {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+dd {
+  padding-left: 20px;
+  margin-top: .5em;
+}
+
+li {
+  margin-left:30px;
+}
+
+table {
+  margin-right: 30px;
+  margin-left: 30px;
+}
+
+hr {
+  margin-right: 30px;
+  margin-left: 30px;
+  border-style: inset;
+  border-width: 1px;
+}
+
+h1, h2, h3, h4, h5, h6, p, pre, dt, li, hr, legend, input, button, textarea, select, address, table {
+  margin-top: 1.2em;
+}
+
+label {
+  padding-top: 1.2em;
+}
+
+fieldset {
+  line-height: 1;
+}
+
+input[type="checkbox"] {
+  vertical-align: bottom;
+  *vertical-align: baseline;
+}
+
+input {_vertical-align: text-bottom;}
+
+input, button, textarea, select, optgroup, option {
+  font-size: .9em;
+}
+
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+.inputButton {
+  *overflow: visible;
+  _width: 0;
+  padding: .2em .4em;
+}
+
+.block {
+  padding: 0 30px;
+  margin-top: 1.2em;
+}
+
+.padding2margin {
+  margin-right: 30px;
+  margin-left: 30px;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.noMarker li {
+  list-style: none;
+  margin-left: 0;
+}
+
+.answer {
+  font-size: 0.9em;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.answer:hover {
+  background: #fdfd00;
+}
+#header {
+  background: #000;
+  color: #fff;
+}
+#header h1 {
+  display: inline;
+  font-size: 2em;
+}
+#header h1 a:visited,
+#header h1 a:active,
+#header h1 a:link {
+  color: #ffff00;
+  text-decoration: none;
+}
+#header h1 a:hover {
+  color: #ffbdc0;
+}
+ul.navlist,
+ul.navlist li {
+  margin-top: 0px;
+  background: #000;
+  list-style: none;
+  display: inline;
+}
+ul.navlist li {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.navlist a:link,
+.navlist a:active,
+.navlist a:visited {
+  color: #ffffff;
+  text-decoration: none;
+}
+ul.navlist li.current {
+  font-weight: bold;
+  color: #fff;
+}
+/* Analyze */
+.strength {
+  color: white;
+  background: #00aa00;
+}
+.weakness {
+  color:white;
+  background: #aa0000;
+}
+#footer {
+  padding-bottom: 5%;
+}
+
+table.review {
+  width: 70%;
+}
+
+h3.report {
+  color: #aa0000;
+  font-variant: small-caps;
+}

@@ -1,0 +1,17 @@
+
+/**
+ * {func_name} form build callback.
+ *
+ * @param array $form
+ *   Drupal form array.
+ * @param array $form_state
+ *   Drupal form_state array.
+ *
+ * @return array
+ *   Drupal form array.
+ */
+function {func_name}($form, &$form_state{additional_params}) {
+  $form = array();
+  {form_items}
+  return $form;
+}

@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * @file
+ *   slnslq360 module install/schema hooks.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function slnslq360_schema() {
+  $schema = array();
+  /*
+  $schema['slnslq360_XXX'] = array(
+    'description' => 'Table for storing additional properties for webform nodes.',
+    'fields' => array(
+     'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'cid' => array(
+        'description' => 'The identifier for this component within this node, starts at 0 for each node.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sid' => array(
+        'description' => 'Scoring category or skill identifier.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+  */
+  return $schema;
+}
+
+
+/**
+ * Implements hook_install().
+ */
+function slnslq360_install() {
+  //module_load_include('inc', 'node', 'content_types');
+  //db_query("UPDATE {system} SET weight = -1 WHERE name = 'webform' AND type = 'module'");
+
+  // drupal_install_schema obsolete in D7
+  //drupal_install_schema('slnsite');
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function slnslq360_uninstall() {
+  // Unset slnslq360 variables.
+  //variable_del('slnslq360_XXX');
+  //variable_del('slnslq360_YYY');
+
+  // Drop tables. obsolete in D7
+  //drupal_uninstall_schema('slnslq360_component_scoring');
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function slnslq360_requirements($phase = 'runtime') {
+  $requirements = array();
+  $t = get_t();
+
+  // TODO: check for required variables and content types
+
+  // Check for duplicate tokens.
+  if ($phase == 'runtime') {
+    $requirements['slnslq360'] = array(
+      'title' => $t('SLN SLQ360 Requirements'),
+      'value' => $t('Requirement text goes here.'),
+      'severity' => REQUIREMENT_INFO,
+      'description' => "this is a description", // theme('item_list', $duplicate_tokens),
+    );
+  }
+
+  return $requirements;
+}

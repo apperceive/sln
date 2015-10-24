@@ -1,0 +1,5 @@
+$theme['{theme_id}'] = array(
+    'variables' => array(),
+    'template' => '{template}',
+    'path' => drupal_get_path('module', '{name}') . '/theme',
+  );

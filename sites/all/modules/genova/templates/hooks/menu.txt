@@ -1,0 +1,10 @@
+
+/**
+ * Implements hook_menu().
+ *
+ */
+function {name}_menu() {
+  $menu = array();
+
+  return $menu;
+}

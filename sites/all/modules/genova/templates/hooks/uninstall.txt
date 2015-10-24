@@ -1,0 +1,8 @@
+
+/**
+ * Implements hook_uninstall().
+ *
+ */
+function {name}_uninstall() {
+  db_delete('variables')->condition('name', '{name}_%', 'LIKE')->execute();
+}
