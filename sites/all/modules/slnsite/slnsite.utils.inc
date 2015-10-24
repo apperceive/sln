@@ -1919,9 +1919,9 @@ function _slnsite_project_submissions($project_nid) {
 function _slnsite_project_token($uniqid) { 
   $sql = <<<EOS
 SELECT entity_id FROM sln.field_data_field_project_observers WHERE field_project_observers_field_project_observer_token_value = :uniqid
-UNION
+UNION ALL
 SELECT entity_id FROM sln.field_data_field_project_subject WHERE field_project_subject_field_project_subject_token_value = :uniqid
-UNION
+UNION ALL
 SELECT entity_id FROM sln.field_data_field_project_supervisor WHERE field_project_supervisor_field_project_supervisor_token_value = :uniqid
 EOS;
   return db_query($sql, array(':uniqid' => $uniqid))->fetchField();
