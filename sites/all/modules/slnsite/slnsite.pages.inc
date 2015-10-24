@@ -528,7 +528,7 @@ function _slnsite_project_survey_submissions_access($node, $account = NULL) {
 
   return node_access('view', $node, $account) && ($module_access || user_access('access all webform results', $account) || (user_access('access own webform results', $account) && $account->uid == $node->uid));
   */
-
+  //dpm(get_defined_vars());
 
   if (_slnsite_user_is_project_administrator($node) )
     return TRUE;
@@ -1352,6 +1352,8 @@ function _slnsite_submission_report_process_data_self($project) {
  */
 // function _slnsite_submission_report($surveynodeid, $submissionid, $templatetid = SLN_TEMPLATE_SLQ_SUBMISSION_REPORT) {
 function _slnsite_submission_report($project, $surveynode, $submission, $templatetid = SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT, $button = "") {
+  
+  //dpm(get_defined_vars());
  
   // todo: query for sid for self for this project
 
@@ -1629,6 +1631,9 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
  */
 //function _slnsite_submission_report_form($form, &$form_state, $surveynodeid, $submissionid, $templatetid = SLN_TEMPLATE_SLQ_SUBMISSION_REPORT) {
 function _slnsite_submission_report_form($form, &$form_state, $project, $surveynode, $submission, $templatetid = SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT) {
+  
+  dpm(get_defined_vars());
+  
   global $user;
   
   if (count($project->field_project_type))
@@ -1659,7 +1664,9 @@ function _slnsite_submission_report_form($form, &$form_state, $project, $surveyn
 
   //$surveynode = node_load($surveynodeid); // IS THIS NECESSARY performance
   
-  if ($project_type == SLN_PROJECT_TYPE_360) {
+  // TODO: field_sln_survey_subject field is only in sln-survey type
+  //if ($project_type == SLN_PROJECT_TYPE_360) {
+  if ($project_type != SLN_PROJECT_TYPE_360) {
     $subject = $surveynode->field_sln_survey_subject[LANGUAGE_NONE][0]['tid'];
     if ($subject != SLN_SUBJECT_SELF) {
       $form['output'] = array(
@@ -2518,7 +2525,13 @@ function _slnsite_project_report($project) {
     // $submissionid = db_query($sql, array(':projectid' => $project->nid, ':nid' => $surveynodeid))->fetchField();
     
     //$form = drupal_get_form("_slnsite_submission_report_form", $surveynodeid, $submissionid, SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT);
-    $form = drupal_get_form("_slnsite_submission_report_form", $project, SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT);
+    
+    // TODO: missing params???
+    
+    $surveynode = node_load($surveynodeid);
+    $submission = webform_get_submission($surveynodeid, $submissionid);
+    
+    $form = drupal_get_form("_slnsite_submission_report_form", $project, $surveynode, $submission, SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT);
     $s = drupal_render($form);
    
   } // 360
