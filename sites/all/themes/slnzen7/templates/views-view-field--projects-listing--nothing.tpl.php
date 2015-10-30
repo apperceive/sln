@@ -44,16 +44,41 @@
  
  //dpm($row);
  
- $submissions = _slnsite_project_submissions($row->nid);
- $c1 = count($submissions);
- $c2 = 0;        // number of completed submissions
- if ($c1) {
-   foreach($submissions as $submission) {
-     if (!$submission->is_draft)
-       $c2++;
-   } // foreach
- } // if c1
- $output = l("$c2 / $c1", "node/" . $row->nid . "/submissions", array('attributes' => array('title' => 'View survey submissions for project ' . $row->node_title . ' ...')));
+  $submissions = _slnsite_project_submissions($row->nid);
+ 
+  $project = node_load($row->nid);
+
+ // skip planning form 
+  $planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ?  $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  
+  
+  //$planning_form =  _slnsite_array_keys_exist(array('field_project_form_planning', LANGUAGE_NONE, 0, 'nid'));
+  
+  // or _slnsite_get($node->field_project_form_planning, "[LANGUAGE_NONE][0]['nid']");
+  
+  $c1 = 0;        // wrong, counts plan: $c1 = count($submissions);
+  $c2 = 0;        // number of completed submissions
+
+  foreach($submissions as $submission) {
+    //dpm(array($submission->nid, $planning_form));
+    if ($submission->nid == $planning_form)
+      continue;
+    if (!$submission->is_draft)
+      $c2++;
+    $c1++;
+  } // foreach
+
+  $output = l("$c2 / $c1", "node/" . $row->nid . "/submissions", array('attributes' => array('title' => 'View survey submissions for project ' . $row->node_title . ' ...')));
+ 
+  $num = _slnsite_count_project_plan_responses($project);
+  
+  $complete = isset($project->field_project_is_complete) && _slnsite_array_keys_exist($project->field_project_is_complete, LANGUAGE_NONE, 0, 'value') && $project->field_project_is_complete[LANGUAGE_NONE][0]['value'];
+  
+  if ($c1 == $c2) 
+    $output .= "<br/>(<small>Plans: $num</small>)";
+  else if ($complete)
+    $output .= " (<small>Complete</small>)";
+ 
  
 ?>
 <?php print $output; ?>

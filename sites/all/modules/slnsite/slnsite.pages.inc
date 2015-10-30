@@ -1513,26 +1513,27 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
     $project_lang = count($project->field_project_survey_language) ? $project->field_project_survey_language[LANGUAGE_NONE][0]['value'] : 0;
     $actions = _slnsite_submission_actions($surveynodeid, $submissionid, $project_lang);
     $mapdata = "";
-    $cnt = 1;
+    //$cnt = 1;
     foreach ($skills as $skill) {
       $skillname = $skill[0];
       $mapdata .= _slnsite_display_action_map_table($skillname, $actions);
       //if (!($cnt % 2))
         //$mapdata .= "<div class='emptypagebreak' style='PAGE-BREAK-BEFORE: always'>&nbsp;</div>";
-      $cnt++;
+      //$cnt++;
     }  // foreach $skill
 
 
     if ($templatetid == SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT) {
       $mcdata = _slnsite_project_submissions_summarize($project);
-
+      $planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
       $mapchartdataarr = array();
       $mcdata2 = array();
       foreach ($mcdata as $nid => $survey) {
         $t = array();
         foreach ($survey['data'] as $key => $arr) {
           $mcdata2[$key][0] = $key;
-          $mcdata2[$key][$nid] = sprintf('%01.2f', round($arr['average'], 2));
+          if ($nid != $planning_form)
+            $mcdata2[$key][$nid] = sprintf('%01.2f', round($arr['average'], 2));
           //$t[] = round($arr['average'], 2);
           $t[] = sprintf('%01.2f', round($arr['average'], 2));
         }  // foreach $survey
@@ -1540,11 +1541,38 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
       } // foreach $data
 
       // display radar chart
-     // $mapchartlabels = array("Transforming", "Bonding", "Managing", "Bartering", "Bridging");
+      // $mapchartlabels = array("Transforming", "Bonding", "Managing", "Bartering", "Bridging");
       $mapchartlabels = array("Managing", "Transforming", "Bonding", "Bridging", "Bartering");
       $mapchart = _slnsite_project_results_radar_chart($project->nid, $mapchartlabels, $mapchartdataarr);
       // display chart data 
-      $mcdata2[] = array(t('Behavioral Agility'), '&nbsp;', '&nbsp;', '&nbsp;',);
+      
+      // avearage scores
+      $obs = is_array($project->field_project_form_observer[LANGUAGE_NONE]) ? $project->field_project_form_observer[LANGUAGE_NONE][0]['nid'] : 0;
+      $sup = is_array($project->field_project_form_supervisor[LANGUAGE_NONE]) ? $project->field_project_form_supervisor[LANGUAGE_NONE][0]['nid'] : 0;
+      $sub = is_array($project->field_project_form_self[LANGUAGE_NONE]) ? $project->field_project_form_self[LANGUAGE_NONE][0]['nid'] : 0;
+      
+      $mcdata2['Behavioral Agility'][0] = t('Behavioral Agility');
+      $mcdata2['Behavioral Agility'][$obs] = _sln_average_col($mcdata2, $obs);
+      $mcdata2['Behavioral Agility'][$sup] = _sln_average_col($mcdata2, $sup);
+      $mcdata2['Behavioral Agility'][$sub] = _sln_average_col($mcdata2, $sub);
+            
+      //dpm(get_defined_vars());
+      
+      /*
+      foreach ($survey['data'] as $key => $arr) {
+        if ($nid != $planning_form) {
+          
+          foreach ($skills as $skill) {
+            $mcdata2['Behavioral Agility'][$nid]
+          }  // foreach $skill
+                
+        } // if
+          $mcdata2[$key][$nid] = sprintf('%01.2f', round($arr['average'], 2));
+          //$t[] = round($arr['average'], 2);
+          $t[] = sprintf('%01.2f', round($arr['average'], 2));
+      }  // foreach $survey
+      */
+
       $mapchartdata = _slnsite_display_table(array('Skill', 'Observer', 'Supervisor', 'Self'), $mcdata2, 'sln-summary-radar-table');
     } // $templatetid == SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT
 
@@ -1632,10 +1660,11 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
 //function _slnsite_submission_report_form($form, &$form_state, $surveynodeid, $submissionid, $templatetid = SLN_TEMPLATE_SLQ_SUBMISSION_REPORT) {
 function _slnsite_submission_report_form($form, &$form_state, $project, $surveynode, $submission, $templatetid = SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT) {
   
-  dpm(get_defined_vars());
+  //dpm(get_defined_vars());
   
   global $user;
   
+  $project_type = 0;
   if (count($project->field_project_type))
     $project_type = $project->field_project_type[LANGUAGE_NONE][0]['tid'];
   
@@ -1890,7 +1919,7 @@ function _slnsite_project_import_validate($form, &$form_state) {
         // check for dups
         // TODO: also check for sup or sub in 360
         $found = false;
-        $observers = $project->field_project_observers[LANGUAGE_NONE];
+        $observers = (is_array($project->field_project_observers) && array_key_exists(LANGUAGE_NONE, $project->field_project_observers) && is_array($project->field_project_observers[LANGUAGE_NONE]) ) ? $project->field_project_observers[LANGUAGE_NONE] : array();
         foreach ($observers as $ndx => $observer) {
           $pemail = "";
           if (array_key_exists(LANGUAGE_NONE, $observer['field_project_observer_email']) && count($observer['field_project_observer_email'][LANGUAGE_NONE])) 
@@ -2066,11 +2095,12 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
   $cbs = array();     // checkboxes
   $recipients = _slnsite_project_participants($project);
 
-  $node = $form['#node'];  
   $project_type = SLN_PROJECT_TYPE_360;
-  if (isset($node->field_project_type) && count($node->field_project_type))
-     $project_type = $node->field_project_type[LANGUAGE_NONE][0]['tid'];
-
+  if (array_key_exists('#node', $form)) {
+    $node = $form['#node'];  
+    if (isset($node->field_project_type) && count($node->field_project_type))
+      $project_type = $node->field_project_type[LANGUAGE_NONE][0]['tid'];
+  }
 
   if (array_key_exists('values', $form_state) && array_key_exists('recipients', $form_state['values']))
     $cbs = $form_state['values']['recipients'];
@@ -2650,8 +2680,9 @@ function _slnsite_project_submissions_listing($project) {
     $surveys[] = $project->field_project_form_supervisor[LANGUAGE_NONE][0]['nid'];
   if (count($project->field_project_form_observer)) 
     $surveys[] = $project->field_project_form_observer[LANGUAGE_NONE][0]['nid'];
-  if (count($project->field_project_form_planning)) 
-    $surveys[] = $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'];
+  // do not include plans
+  //if (count($project->field_project_form_planning)) 
+  //  $surveys[] = $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'];
 
   //dpm($surveys);
   
@@ -2699,6 +2730,9 @@ function _slnsite_project_submissions_listing($project) {
      
       if ($sub_project_id == $project->nid) {
 
+        if ($project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] == $survey_nid) 
+          dpm($submission);
+        
         //dpm($submission);
         $arr = array();
         //$arr['sid'] = $submission->sid;
@@ -2911,11 +2945,11 @@ function _slnsite_submission_router($uniqid) {
       $project = node_load($project_nid);
       if ($project) {
         
-        // todo: test if supervisor and other value exists
+        // TODO: test if supervisor and other value exists
         $subject = $project->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_token'][LANGUAGE_NONE][0]['value'];
         $supervisor = $project->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_token'][LANGUAGE_NONE][0]['value'];
         
-        // assume observer form unless token belongs to subject or supervisor
+        // assume observer form as most likely unless token belongs to subject or supervisor
         $form_nid = 0;
         if (count($project->field_project_form_observer))
           $form_nid = $project->field_project_form_observer[LANGUAGE_NONE][0]['nid'];
@@ -2928,12 +2962,12 @@ function _slnsite_submission_router($uniqid) {
         
         
          // TODO: ensure $uniqid is safe
-        if ($subject && $form_nid) {  // TODO: if all are valid, then create submission
+        if ($subject && $form_nid) {
           $submissionid = _slnsite_project_submission_create($project_nid, $form_nid, $subject, $uniqid);
         } // subject
         
         if (!$submissionid) {
-          // unable to create 
+          // unable to create submission
           // if no project or submission, indicate that no survey corresponds to the url and show form to email person links (assuming anon). return only message and form    
           $s .= "No survey matches this url address (unable to create survey). Please contact an administrator for assistance.";
         }
@@ -2969,12 +3003,15 @@ function _slnsite_submission_router($uniqid) {
       // TODO: use? _slnsite_submission_is_complete($surveynodeid, $submissionid);
       $is_draft = $submission->is_draft;
       
+      
       $project_nid = _slnsite_submission_data('sln_project_id', $submission, $surveynode);
       if ($project_nid) {   
         $project = node_load($project_nid);
         if ($project) {
           // TODO: is project published?, special message for unpublished projects?
-
+          
+          $project_submissions_complete = _slnsite_project_submissions_complete($project);
+      
           $self_form_nid = 0;
           if (count($project->field_project_form_self))
             $self_form_nid = $project->field_project_form_self[LANGUAGE_NONE][0]['nid'];
@@ -2991,9 +3028,11 @@ function _slnsite_submission_router($uniqid) {
           if (count($project->field_project_form_planning))
             $plan_form_nid = $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'];
           
-          // todo: we need to consider access to plans, reports, etc for self type submissions
-          // todo: remove debug logic below 1 ||
-          if (1 || $is_draft) {
+          // TODO: we need to consider access to plans, reports, etc for self type submissions
+
+      //dpm(get_defined_vars());
+      
+          if ($is_draft) {
             $s = drupal_get_form('webform_client_form_' . $surveynode->nid, $surveynode, $submission);
             //dpm(get_defined_vars());
           }
@@ -3006,7 +3045,9 @@ function _slnsite_submission_router($uniqid) {
               drupal_goto("thank-you");
             } 
             else {
-              if (_slnsite_project_submissions_complete($project)) {
+              
+              //dpm(array($project_submissions_complete));
+              if ($project_submissions_complete) {
                 // check for plan. if no plan for this project, create it. either way, show plan form.
                 $plansubmissionid = _slnsite_project_survey_submission($project, $plan_form_nid) ;
                 if (!$plansubmissionid) {

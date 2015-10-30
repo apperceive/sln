@@ -463,7 +463,7 @@ function _slnsite_display_submitter_info_table($uid, $position = "") {
   else {
     //$name = "Unknown. User id is not valid ($uid)";
     // pass thru uid (it's an email or name)
-    $name = check_plain($uid);
+    $name = check_plain(is_string($uid) ? $uid : "");
   }
 
   $header = array();
@@ -660,7 +660,8 @@ function _slnsite_submission_plans($surveynodeid, $submissionid) {
   if ($project_nid) {
     $project = node_load($project_nid);
     if ($project) {    
-      $self_form_nid = count($project->field_project_form_self) ? $project->field_project_form_self[0]['nid'] : 0;  
+      // TODO: test index? log showed an 'Undefined offset: 0' for next line
+      $self_form_nid = (count($project->field_project_form_self)) ? $project->field_project_form_self[0]['nid'] : 0;  
     }
     else {
     
@@ -1634,6 +1635,7 @@ function _slnsite_project_participants($project_or_id) {
   $arr = array();
   if (is_object($node)) {
     // TODO: check type?
+    // todo: check for valid indexes
     if (count($node->field_project_subject) && count($node->field_project_subject[LANGUAGE_NONE])) {
       $subject = $node->field_project_subject[LANGUAGE_NONE][0];
       $name = $subject['field_project_subject_name'][LANGUAGE_NONE][0]['value'];
@@ -1682,9 +1684,9 @@ function _slnsite_message_data($project, $recipients, $values) {
   if (count($project->field_project_supervisor) && count($project->field_project_supervisor[LANGUAGE_NONE]))   
     $supervisor = $project->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_name'][LANGUAGE_NONE][0]['value'];
   
-  $reserceheruid = $project->field_project_manager[LANGUAGE_NONE][0]['uid'];
-  $researcher = user_load($reserceheruid);
-  $researchername = "unknown (id: " . check_plain($reserceheruid) . ")";
+  $researcheruid = $project->field_project_manager[LANGUAGE_NONE][0]['uid'];
+  $researcher = user_load($researcheruid);
+  $researchername = "unknown (id: " . check_plain(is_string($researcheruid) ? $researcheruid : "") . ")";
   if ($researcher && $researcher->uid) {
     $first = $researcher->profile_first_name;
     $last = $researcher->profile_last_name;
@@ -1696,7 +1698,7 @@ function _slnsite_message_data($project, $recipients, $values) {
       //$researchername = '"' . $first . " " . $last . ' "&lt;' . $mail .'&gt;';
   }
   else {
-    $researchername = check_plain($reserceheruid);
+    $researchername = check_plain(is_string($researcheruid) ? $researcheruid : "");
   } // researcher
 
   $data = array();
@@ -1891,12 +1893,15 @@ function _slnsite_submission_data($form_key, $submission, $survey, $retval = NUL
 } // _slnsite_submission_data
 
 /**
- * return array of project submissions
+ * return array of project submissions (including plan!!!)
  *
  *
  */
 function _slnsite_project_submissions($project_nid) {
   $data = array();
+  
+  // TODO: allow second param of nid's to ignore (e.g., plan)
+  
   
   $sql = "SELECT wsd.nid, wsd.sid FROM webform_submitted_data wsd, webform_component wc WHERE wc.nid = wsd.nid AND wc.cid = wsd.cid AND wc.form_key = 'sln_project_id' AND wsd.data = :project_nid";
   
@@ -1948,8 +1953,14 @@ function _slnsite_project_submissions_complete($project) {
   if (isset($project->field_project_is_complete) && _slnsite_array_keys_exist($project->field_project_is_complete, LANGUAGE_NONE, 0, 'value') && $project->field_project_is_complete[LANGUAGE_NONE][0]['value'])
     return TRUE;
 
+  $planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  
   $submissions = _slnsite_project_submissions($project->nid);
   foreach ($submissions as $submission) {
+    //dpm(array($submission->is_draft, $submission));
+    // avoid plan!
+    if ($submission->nid == $planning_form)
+      continue;
     if ($submission->is_draft)
       return FALSE;
   } // foreach
@@ -2086,7 +2097,67 @@ function _sln_gen_token($prefix = "", $tokenLen = 7, $base = 0) {
   return $prefix . $retval;
 } // _sln_gen_token
 
-
+function _sln_average_col($data, $ndx) {
+  if (!is_array($data))
+    return NULL;
+  $sum = 0;
+  $cnt = 0;
+  foreach ($data as $row) {
+    if (array_key_exists($ndx, $row)) {
+      $sum += $row[$ndx];
+      $cnt++;
+    } // if
+  } // foreach
+  if ($cnt)
+    return sprintf('%01.2f', ($cnt ? round($sum/$cnt, 2) : ""));
+  return 0;
+}
   
+function _slnsite_count_project_plan_responses($project) {
+
+  $project_type = count($project->field_project_type) ? $project->field_project_type[LANGUAGE_NONE][0]['tid'] : 0;
+
+  $plansurveynodeid = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  
+  $surveynode = node_load($plansurveynodeid);
+  $submissionid = _slnsite_project_survey_submission($project, $plansurveynodeid);
+  $submission = webform_get_submission($plansurveynodeid, $submissionid);
+  
+  //dpm(array($surveynode, $submission));
+  
+  return _slnsite_count_plan_submission_responses($surveynode, $submission);
+} // _slnsite_count_project_plan_responses
+
+// count project plan responses
+function _slnsite_count_plan_submission_responses($surveynode, $submission) {
+  $cntplans = 0;  // count action plans if self-assessment
+  $data = array();
+  if ($submission && isset($submission->data) && is_array($submission->data))
+    $data = $submission->data;
+  // foreach ($surveynode->webform['components'] as $cid => $wc) {
+  //$cnt = 0;
+  foreach($data as $cid => $value) {
+    //$cnt++;
+    //$form_key = $wc['form_key'];
+    $form_key = $surveynode->webform['components'][$cid]['form_key'];
+    //$val = is_array($data[$cid]) ? $data[$cid][0] : $data[$cid];
+    $val = $value[0];
+    
+    //if (is_string($val) && strlen($val) && (substr($val,0,3) == 'aaa')) 
+    //  dpm(array($form_key, $cid, "ta$cnt", $val));
+    
+    // ASSUMPTION: ta9999 are form keys for plan textarea's
+    //if ($form_key == "ta$cnt")  {
+    if (preg_match('~ta[0-9]+~', $form_key))  {
+      if (is_string($val) && drupal_strlen(trim($val)))
+        $cntplans++;
+    } // self plan 
+  }
+  return $cntplans;
+} // _slnsite_count_plan_submission_responses
+
+
+
+
   
 

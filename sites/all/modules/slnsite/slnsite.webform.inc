@@ -413,6 +413,12 @@ function slnsite_webform_submission_render_alter(&$renderable) {
  */
 function slnsite_webform_submission_create($submission, $node, $account, $form_state) {
 
+  if (!$submission || !$node)
+    return;
+  
+  if (!isset($submission->completed))
+    $submission->completed = _slnsite_submission_is_complete($node->nid, $submission->sid, FALSE);
+
   //dpm(get_defined_vars());
 
   //   $submission->new_property = TRUE;
@@ -429,6 +435,8 @@ function slnsite_webform_submission_create($submission, $node, $account, $form_s
 function slnsite_webform_submission_presave($node, &$submission) {
   //if (in_array($types, array('sln_webform')))
 
+  if (!$submission || !$node)
+    return;
 
   $surveynodeid = $node->nid;
   if (!isset($submission->sid)) {    // return false on any unsaved submission
@@ -441,6 +449,8 @@ function slnsite_webform_submission_presave($node, &$submission) {
   }
   $submission->is_draft = $complete ? FALSE : TRUE;
 
+  $submission->completed = $complete;
+  
 
   // set date to now
   $submission->submitted = REQUEST_TIME;
@@ -488,6 +498,12 @@ function slnsite_webform_submission_presave($node, &$submission) {
  *   The Webform submission that was just inserted into the database.
  */
 function slnsite_webform_submission_insert($node, $submission) {
+  
+  if (!$submission || !$node)
+    return;
+  
+  if (!isset($submission->completed))
+    $submission->completed = _slnsite_submission_is_complete($node->nid, $submission->sid, FALSE);
 
   //dpm(get_defined_vars());
 
@@ -517,6 +533,11 @@ function slnsite_webform_submission_insert($node, $submission) {
  */
 function slnsite_webform_submission_update($node, $submission) {
 
+  if (!$submission || !$node)
+    return;
+  
+  if (!isset($submission->completed))
+    $submission->completed = _slnsite_submission_is_complete($node->nid, $submission->sid, FALSE);
   //dpm(get_defined_vars());
 
   // Update a record in a 3rd-party module table when a submission is updated.

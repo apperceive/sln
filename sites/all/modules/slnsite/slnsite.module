@@ -19,6 +19,7 @@ define('SLN_BENCHMARKS', 'sln_benchmarks');
 define('SLN_SURVEY_PARTICIPANT_TYPE', 'sln_survey_participant_type');
 
 // term id's
+// TODO: NOTE: typos  SURVERY
 define('SLN_SURVERY_SECTION_1', 98);
 define('SLN_SURVERY_SECTION_ACTION_PLAN', 68);
 define('SLN_TEMPLATE_SLQ_FREE_RESOURCES', 104);
