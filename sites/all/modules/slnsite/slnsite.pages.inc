@@ -2742,8 +2742,9 @@ function _slnsite_project_submissions_listing($project) {
         $arr['survey'] = $surveynode->title;
         $arr['ratee'] = _slnsite_project_participant($sub_project_id, $sub_subject_id);  // LOOKUP NAME OR EMAIL
         $arr['status'] = $submission->is_draft ? " - " : "Complete";
-        //$arr['link'] = l('form', "survey/$submission->sid");      // replace sid with $sub_participant_id
-        $arr['link'] = l('form', "survey/$sub_participant_id");      // replace sid with $sub_participant_id
+        $arr['link'] = l('form', "survey/$sub_participant_id");     
+        $arr['dlink'] = $submission->is_draft ? "&nbsp;" : l('data', "node/$survey_nid/submission/$submission->sid");      
+        
         // ignore invalid tokens for subject or participant
         // TODO: delete old surveys
         
@@ -2758,9 +2759,9 @@ function _slnsite_project_submissions_listing($project) {
     } // foreach submission
   } // foreach form
   if ($project->type == 'sln_project_360')
-    $headers = array(/*'sid', 'nid',*/ 'Rater', 'Survey', 'Subject', 'Status', 'Link');
+    $headers = array(/*'sid', 'nid',*/ 'Rater', 'Survey', 'Subject', 'Status', 'Link', 'Data');
   else
-    $headers = array(/*'sid', 'nid', 'Rater', */'survey', 'Subject', 'Status', 'Link');
+    $headers = array(/*'sid', 'nid', 'Rater', */'survey', 'Subject', 'Status', 'Link', 'Data');
 
   if (count($data))
     $s .= _slnsite_display_table($headers, $data, 'sln-project-surveys-listing');
