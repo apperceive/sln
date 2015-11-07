@@ -12,6 +12,10 @@ body {
   font-family: /*Georgia, "Times New Roman",*/ Arial, Verdana, Tahoma, sans-serif;
 }
 
+#page, .region-bottom {
+  max-width: 1800px;
+}
+
 #page-wrapper,
 .region-page-closure {
   min-width: 640px;
@@ -691,6 +695,23 @@ div.field-name-field-project-observer-email  {
  /*width: 30%;*/
  margin-left: 10px;
 }
+
+.views-field-field-project-subject  {
+  
+}
+
+.views-field-field-project-subject .field-name-field-project-subject-name {
+  display: block;
+  margin-left: 0;
+  width: 240px;
+  overflow: hidden;
+}
+
+.views-field-field-project-subject .field-name-field-project-subject-email  {
+  display: none;
+}
+
+
 
 /* make chart responsive */
 .pchart_ajax img {

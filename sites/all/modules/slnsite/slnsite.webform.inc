@@ -444,6 +444,9 @@ function slnsite_webform_submission_presave($node, &$submission) {
   }
   else {
     $submissionid = $submission->sid;
+    
+    // TODO: set value to completed datetime?
+    
     $complete = _slnsite_submission_is_complete($surveynodeid, $submissionid, FALSE);
     //drupal_set_message("saved submission with complete: " . ($complete ? 1 : 0));
   }
