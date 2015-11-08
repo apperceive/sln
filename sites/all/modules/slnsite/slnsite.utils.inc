@@ -1771,7 +1771,7 @@ function _slnsite_message_preview($project, $recipients, $values) {
       //$mailparts[] = 'Reply-To: ' . $data[$ndx]['reply_to'];
       $mailparts[] = 'Subject: ' . $data[$ndx]['subject'];
       $type = strtolower($r['type']);
-      $mailparts[] = 'Message: "' . $data[$ndx]['message'];
+      $mailparts[] = 'Message: ' . $data[$ndx]['message'];
       $items[] = theme_item_list(array(
         'items' => $mailparts,
         'title' => 'Message for ' . $r['name'],

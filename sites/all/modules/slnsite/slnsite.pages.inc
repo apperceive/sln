@@ -2185,8 +2185,26 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
      '#tree' => TRUE,
     );
   
-  }
+  } // 360
 
+  $form['message']['actions'] = array(
+    '#type' => 'actions'
+  );  
+  $form['message']['actions']['save'] = array(
+   '#type' => 'submit',
+   '#value' => t('Save as Default Email Templates'),
+   '#submit' => array('_slnsite_project_messaging_form_template_save'),
+   '#attributes' => array('disabled' => 'disabled'),
+  );
+
+  $form['message']['actions']['load'] = array(
+   '#type' => 'submit',
+   '#value' => t('Load Default Email Templates'),
+   '#submit' => array('_slnsite_project_messaging_form_template_load'),
+   '#attributes' => array('disabled' => 'disabled'),
+  );
+
+  
   $v = count($project->field_messaging_obs_message) ? $project->field_messaging_obs_message[LANGUAGE_NONE][0]['value']: NULL;
   if (!drupal_strlen($v))
     $v = variable_get('sln_project_messaging_message_observer', "Please take the survey at <a href='%survey'>%survey</a> to evaluate %subject.");
@@ -2203,7 +2221,7 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
   $v = count($project->field_project_messaging_topic) ? $project->field_project_messaging_topic[LANGUAGE_NONE][0]['value']: NULL;
   if (!drupal_strlen($v))
     $v = variable_get('sln_project_messaging_topic', "%project");
-   $form['subject'] = array(
+  $form['subject'] = array(
    '#type' => 'textfield',
    '#title' => t('Subject or Topic'),
    '#required' => TRUE,
@@ -2351,8 +2369,8 @@ function _slnsite_project_messaging_form_submit($form, &$form_state) {
       //else
         //drupal_set_message("skipping unselected: $ndx");
     } // if valid 
-    //else
-      //drupal_set_message("invalid email: $ndx"); 
+    else
+      drupal_set_message("Invalid email: $ndx", 'warning'); 
   } // foreach
   
   //dpm(get_defined_vars());
@@ -2364,6 +2382,26 @@ function _slnsite_project_messaging_form_preview($form, &$form_state) {
   $form_state['values']['show_preview'] = TRUE;
 
   //dpm(get_defined_vars());
+} // _slnsite_project_messaging_form_preview
+
+function _slnsite_project_messaging_form_template_save($form, &$form_state) {
+  $form_state['rebuild'] = TRUE;
+  $form_state['values']['show_preview'] = FALSE;
+  
+  // save form email values as vars
+  drupal_set_message("Messages saved as default for new projects and for 'Load' in existing projects.", 'info');
+
+} // _slnsite_project_messaging_form_preview
+
+function _slnsite_project_messaging_form_template_load($form, &$form_state) {
+  $form_state['rebuild'] = TRUE;
+  $form_state['values']['show_preview'] = FALSE;
+  
+  // are you sure?
+  // copy vars into project fields or $form_state['values'] or both
+  // save project? note this is a form submit, not a node edit
+  drupal_set_message("Default messages loaded into this project.", 'info');
+
 } // _slnsite_project_messaging_form_preview
 
 // obsolete?
