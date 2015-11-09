@@ -141,6 +141,33 @@ function values_ctools_plugin_api($owner, $api) {
   }
 }
 
+/**
+ * Implements hook_i18n_string_info().
+ */
+function values_i18n_string_info() {
+  $groups['values'] = array(
+    'title' => t('Values'),
+    'description' => t('Translatable field value sets.'),
+    'format' => FALSE, // This group doesn't have strings with format
+    'list' => TRUE, // This group can list all strings
+  );
+  return $groups;
+}
+
+/**
+ * Implements hook_i18n_string_list().
+ */
+function values_i18n_string_list($group) {
+  if ($group == 'values') {
+    foreach (values_load_all() as $name => $value_set) {
+      foreach ($value_set->data as $key => $value) {
+        $strings['values'][$name][$value['key']]['value'] = $value['value'];
+      }
+    }
+    return $strings;
+  }
+}
+
 /***********************************************************************
  *
  * VALUES FORM
@@ -856,7 +883,7 @@ function values_load_options($name) {
   $options = array();
   if (!empty($value_set->data)) {
     foreach ($value_set->data as $delta => $value) {
-      $options[$value['key']] = t('@value', array('@value' => $value['value']));
+      $options[$value['key']] = t('@value', array('@value' => values_translate($name, $value['key'], $value['value'])));
     }
   }
   return $options;
@@ -867,6 +894,18 @@ function values_load_options($name) {
  * HELPER FUNCTIONS -- PUBLIC
  *
  ***********************************************************************/
+
+/**
+ * Return a translated value if capable and a translation exists.
+ */
+function values_translate($set, $key, $string, $options = array()) {
+  global $language;
+  $options += array(
+    'langcode' => $language->language,
+  );
+
+  return function_exists('i18n_string') ? i18n_string('values:' . $set . ':' . $key . ':value', $string, $options) : $string;
+}
 
 /**
  * Sort list of values by weight. Meant for uasort()

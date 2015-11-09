@@ -12,9 +12,9 @@ project = "values"
 datestamp = "1299759359"
 
 
-; Information added by Drupal.org packaging script on 2014-08-26
-version = "7.x-1.0"
+; Information added by Drupal.org packaging script on 2015-07-28
+version = "7.x-1.1"
 core = "7.x"
 project = "values"
-datestamp = "1409087037"
+datestamp = "1438120143"
 

@@ -11,9 +11,9 @@ project = "webform_matrix_component"
 datestamp = "1380780972"
 
 
-; Information added by Drupal.org packaging script on 2015-06-07
-version = "7.x-4.16"
+; Information added by Drupal.org packaging script on 2015-09-08
+version = "7.x-4.17"
 core = "7.x"
 project = "webform_matrix_component"
-datestamp = "1433695081"
+datestamp = "1441735440"
 
