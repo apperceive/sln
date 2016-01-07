@@ -966,7 +966,7 @@ function _slnsite_project_submissions_process($project, $showcases = FALSE) {
     $data['headers'][] = "Item";
     $data['headers'][] = "Actions<p class='important'> When I am performing my duties ...<p/>";
     $data['headers'][] = "Self";
-    $data['headers'][] = "Obs";
+    $data['headers'][] = "Obs ($obscnt)";
     $data['headers'][] = "Sup";
   } // if showcases
 
@@ -1110,12 +1110,14 @@ function _slnsite_project_submissions_summarize($project) {
   }  // numeric project
 
   $surveys = array();
-  if (count($project->field_project_form_self))
-    $surveys[] = $project->field_project_form_self[LANGUAGE_NONE][0]['nid'];
-  if (count($project->field_project_form_supervisor)) 
-    $surveys[] = $project->field_project_form_supervisor[LANGUAGE_NONE][0]['nid'];
   if (count($project->field_project_form_observer)) 
     $surveys[] = $project->field_project_form_observer[LANGUAGE_NONE][0]['nid'];
+  if (count($project->field_project_form_supervisor)) 
+    $surveys[] = $project->field_project_form_supervisor[LANGUAGE_NONE][0]['nid'];
+  if (count($project->field_project_form_self))
+    $surveys[] = $project->field_project_form_self[LANGUAGE_NONE][0]['nid'];
+
+
   if (count($project->field_project_form_planning)) 
     $surveys[] = $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'];
 
@@ -1476,23 +1478,27 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
 
   $skillsdefndata = _slnsite_display_table(
     array('Strategic Leader Influence Actions', 'Description'),
-    _slnsite_skills_definitions($instrument),
+    _slnsite_skills_definitions($instrument, true),
     "sln-skills-table"
   );
 
   
   // TODO: only show if subject data exists
   $comparedata = _slnsite_display_table(
+
     array_merge(
       array("Strategic Leader Actions", "Your Score"),
       _slnsite_vocabulary_term_names(SLN_BENCHMARK_TYPES)
     ),
+
     _slnsite_comparison_data(
       SLN_INSTRUMENT_SLQ,
       _slnsite_submission_scores($surveynodeid, $submissionid)
     ),
     "sln-compare-table"
   );
+
+
 
   $plandata = "";
   $mapdata = "";
@@ -1521,13 +1527,21 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
         //$mapdata .= "<div class='emptypagebreak' style='PAGE-BREAK-BEFORE: always'>&nbsp;</div>";
       //$cnt++;
     }  // foreach $skill
+    
+    //$obscount = 0;
+    //if (array_key_exists(LANGUAGE_NONE, $project->field_project_observers) && (is_array($project->field_project_observers[LANGUAGE_NONE])))
+    //  $obscount = count($project->field_project_observers[LANGUAGE_NONE]);
 
-
+    $obscnt = count($project->field_project_form_observer)? _slnsite_project_completed_submissions_count($project, $project->field_project_form_observer[LANGUAGE_NONE][0]['nid']) : 0; 
+  
+  
     if ($templatetid == SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT) {
       $mcdata = _slnsite_project_submissions_summarize($project);
-      $planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+      $planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ?  $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+      //$obs_form = is_array($project->field_project_form_observer[LANGUAGE_NONE]) ? $project->field_project_form_observer[LANGUAGE_NONE][0]['nid'] : 0;
       $mapchartdataarr = array();
       $mcdata2 = array();
+      
       foreach ($mcdata as $nid => $survey) {
         $t = array();
         foreach ($survey['data'] as $key => $arr) {
@@ -1543,12 +1557,15 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
       // display radar chart
       // $mapchartlabels = array("Transforming", "Bonding", "Managing", "Bartering", "Bridging");
       $mapchartlabels = array("Managing", "Transforming", "Bonding", "Bridging", "Bartering");
-      $mapchart = _slnsite_project_results_radar_chart($project->nid, $mapchartlabels, $mapchartdataarr);
+      $mapchart = _slnsite_project_results_radar_chart($project->nid, $mapchartlabels, $mapchartdataarr, $obscnt);
       // display chart data 
       
-      // avearage scores
+      // average scores
+      // todo: redundant with above form nids, consolidate
       $obs = is_array($project->field_project_form_observer[LANGUAGE_NONE]) ? $project->field_project_form_observer[LANGUAGE_NONE][0]['nid'] : 0;
+
       $sup = is_array($project->field_project_form_supervisor[LANGUAGE_NONE]) ? $project->field_project_form_supervisor[LANGUAGE_NONE][0]['nid'] : 0;
+
       $sub = is_array($project->field_project_form_self[LANGUAGE_NONE]) ? $project->field_project_form_self[LANGUAGE_NONE][0]['nid'] : 0;
       
       $mcdata2['Behavioral Agility'][0] = t('Behavioral Agility');
@@ -1573,7 +1590,10 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
       }  // foreach $survey
       */
 
-      $mapchartdata = _slnsite_display_table(array('Skill', 'Observer', 'Supervisor', 'Self'), $mcdata2, 'sln-summary-radar-table');
+      $mapchartdata = _slnsite_display_table(array('Skill', "Observer ($obscnt)", 'Supervisor', 'Self'), $mcdata2, 'sln-summary-radar-table');
+
+
+
     } // $templatetid == SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT
 
 
@@ -2135,6 +2155,8 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
    '#value' => is_object($project) ? $project->nid : NULL,
    );
 
+
+
   $form['preview'] = array(
    '#markup' => isset($form_state['values']['show_preview']) ? _slnsite_message_preview($project, $recipients, $form_state['values']) : "",
    );
@@ -2187,19 +2209,36 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
   
   } // 360
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   $form['message']['actions'] = array(
     '#type' => 'actions'
   );  
+
   $form['message']['actions']['save'] = array(
    '#type' => 'submit',
    '#value' => t('Save as Default Email Templates'),
    '#submit' => array('_slnsite_project_messaging_form_template_save'),
+
+
    '#attributes' => array('disabled' => 'disabled'),
   );
 
   $form['message']['actions']['load'] = array(
    '#type' => 'submit',
    '#value' => t('Load Default Email Templates'),
+
    '#submit' => array('_slnsite_project_messaging_form_template_load'),
    '#attributes' => array('disabled' => 'disabled'),
   );
@@ -2278,15 +2317,25 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
     '#type' => 'actions'
   );
 
+
+
+
+
+
+
+
+
   $form['actions']['send'] = array(
    '#type' => 'submit',
    '#value' => t('Send'),
+
    //'#attributes' => array('disabled' => 'disabled'),
   );
 
   $form['actions']['preview'] = array(
    '#type' => 'submit',
    '#value' => t('Preview'),
+
    '#submit' => array('_slnsite_project_messaging_form_preview'),
   );
 
@@ -2315,12 +2364,16 @@ function _slnsite_project_messaging_form_validate($form, &$form_state) {
   } // if project
   //dpm(get_defined_vars());
 
+
+
 } // _slnsite_project_messaging_form
 
 function _slnsite_project_messaging_form_submit($form, &$form_state) {
   global $user;
   $form_state['rebuild'] = TRUE;
   
+
+
   if (!(array_key_exists('values', $form_state) && array_key_exists('recipients', $form_state['values']) && is_array($form_state['values']['recipients']))) {
     drupal_set_message("No email recipients selected.");
     return;
@@ -2382,13 +2435,25 @@ function _slnsite_project_messaging_form_preview($form, &$form_state) {
   $form_state['values']['show_preview'] = TRUE;
 
   //dpm(get_defined_vars());
+
 } // _slnsite_project_messaging_form_preview
 
 function _slnsite_project_messaging_form_template_save($form, &$form_state) {
   $form_state['rebuild'] = TRUE;
   $form_state['values']['show_preview'] = FALSE;
+
+
   
   // save form email values as vars
+
+
+
+
+
+
+
+
+
   drupal_set_message("Messages saved as default for new projects and for 'Load' in existing projects.", 'info');
 
 } // _slnsite_project_messaging_form_preview
@@ -2400,6 +2465,12 @@ function _slnsite_project_messaging_form_template_load($form, &$form_state) {
   // are you sure?
   // copy vars into project fields or $form_state['values'] or both
   // save project? note this is a form submit, not a node edit
+
+
+
+
+
+
   drupal_set_message("Default messages loaded into this project.", 'info');
 
 } // _slnsite_project_messaging_form_preview
@@ -2436,8 +2507,9 @@ function _slnsite_project_plan($project) {
  * see http://wiki.pchart.net/doc.draw.radar.html
  *
  */
-function _slnsite_project_results_radar_chart($projectid, $labels, $data) {
+function _slnsite_project_results_radar_chart($projectid, $labels, $data, $obscount = 0) {
   $path = '/var/www/sln.thestrategicleader.org/public/sites/all/libraries/pchart';
+
   include("$path/class/pData.class.php");
   include("$path/class/pDraw.class.php");
   include("$path/class/pImage.class.php");
@@ -2537,7 +2609,7 @@ function _slnsite_project_results_radar_chart($projectid, $labels, $data) {
     $obs = $data[0][$ndx];
     $sup = $data[1][$ndx];
     $self = $data[2][$ndx];
-    $title = "$skill: Obs: $obs, Sup: $sup, Self: $self";  
+    $title = "$skill: Obs: $obs ($obscount), Sup: $sup, Self: $self";  
     $coords = $coordsarr[$ndx];
     $href = "javascript: alert(\"$title\")";
     $areas .= "<area class='tipsy' title='$title' href='$href' shape='rect' coords='$coords'/>\n";
