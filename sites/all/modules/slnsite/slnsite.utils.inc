@@ -1688,11 +1688,11 @@ function _slnsite_message_data($project, $recipients, $values) {
   $researcher = user_load($researcheruid);
   $researchername = "unknown (id: " . check_plain(is_string($researcheruid) ? $researcheruid : "") . ")";
   if ($researcher && $researcher->uid) {
-    $first = $researcher->profile_first_name;
-    $last = $researcher->profile_last_name;
-    $mail = $researcher->mail;
-    $name = $researcher->name;
-    $researchername = $mail;
+    $first = $researcher->profile_first_name ? $researcher->profile_first_name : "";
+    $last = $researcher->profile_last_name ? $researcher->profile_last_name : "";
+    $mail = $researcher->mail ? $researcher->mail : "";
+    $name = $researcher->name ? $researcher->name : "";
+    $researchername = $mail ? $mail : "";
     //$researchername = '"' . $name . '" &lt;' . $mail .'&gt;';
     //if ($first && $last)
       //$researchername = '"' . $first . " " . $last . ' "&lt;' . $mail .'&gt;';
@@ -1716,7 +1716,14 @@ function _slnsite_message_data($project, $recipients, $values) {
       //$mailparts['reply_to'] = strtr($values['reply_to'], $vars);
       $mailparts['subject'] = strtr($values['subject'], $vars);
       $type = strtolower($r['type']);
-      $mailparts['message'] = strtr($values['message'][$type]['value'], $vars);
+      // TODO: no value index possible?
+      //dpm($values['message'][$type]);
+      if (isset($values['message'][$type]['value']))
+        $mailparts['message'] = strtr($values['message'][$type]['value'], $vars);
+      else if (isset($values['message'][$type]) && is_string($values['message'][$type]))
+        $mailparts['message'] = strtr($values['message'][$type], $vars);
+      else
+        $mailparts['message'] = "Error: unable to load message.";
       $mailparts['token'] = $r['token'];
       $data[$ndx] = $mailparts;
 
@@ -2111,13 +2118,14 @@ function _sln_average_col($data, $ndx) {
   if ($cnt)
     return sprintf('%01.2f', ($cnt ? round($sum/$cnt, 2) : ""));
   return 0;
-}
+} // _sln_average_col
   
 function _slnsite_count_project_plan_responses($project) {
 
   $project_type = count($project->field_project_type) ? $project->field_project_type[LANGUAGE_NONE][0]['tid'] : 0;
 
-  $plansurveynodeid = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  //$plansurveynodeid = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  $plansurveynodeid = isset($project->field_project_form_planning[LANGUAGE_NONE]) && is_array($project->field_project_form_planning[LANGUAGE_NONE]) ? $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
   
   $surveynode = node_load($plansurveynodeid);
   $submissionid = _slnsite_project_survey_submission($project, $plansurveynodeid);
@@ -2156,8 +2164,31 @@ function _slnsite_count_plan_submission_responses($surveynode, $submission) {
   return $cntplans;
 } // _slnsite_count_plan_submission_responses
 
+function _slnsite_messages_save($form_state) {
+  if (!(array_key_exists('values', $form_state) && array_key_exists('project_nid', $form_state['values'])))
+    return;
+  $projectid = $form_state['values']['project_nid'];
+  $project = NULL;
+  if ($projectid > 0)
+    $project = node_load($projectid);
+  if ($project) {
+    $values = $form_state['values'];
+    $project->field_messaging_subject_message = _slnsite_field_init($values['message']['subject']);
+    $project->field_messaging_sup_message = _slnsite_field_init($values['message']['supervisor']);
+    $project->field_messaging_obs_message = _slnsite_field_init($values['message']['observer']);
+    $project->field_project_messaging_topic = _slnsite_field_init($values['subject']);
+    $project->field_project_messaging_from = _slnsite_field_init($values['from']);
+    node_save($project);
+    drupal_set_message("Project messages updated.", 'info');
+  } // project
+} // _slnsite_messages_save
 
+function _slnsite_field_init($value = "", $retval = NULL, $key = 'value') {  
+  if (!is_string($key)) return $retval;
+  return array(LANGUAGE_NONE => array(0 => array($key => $value)));
+} // 
 
-
-  
-
+function _slnsite_field_init_var($varname = '', $retval = '', $key = 'value') {
+  if (!is_string($varname) || !is_string($key)) return $retval;
+  return _slnsite_field_init(variable_get($varname, $retval), $key, $retval);
+} // _slnsite_field_init_var

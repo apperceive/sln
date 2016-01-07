@@ -894,6 +894,35 @@ function slnsite_node_prepare($node) {
   //dpm($node);
   if ($node->type == 'sln_project_360') {
     _slnsite_project_status_report($node);
+
+    // TODO: refine for different project types?
+    // TODO: save each message to matching survey
+    // TODO: add message for plan
+
+    // load message fields from vars instead of defaults
+    $node->sln_project_messaging_topic = _slnsite_field_init_var('sln_project_messaging_topic');
+    $node->field_project_messaging_from = _slnsite_field_init_var('sln_project_messaging_from');
+    $node->field_messaging_subject_message = _slnsite_field_init_var('sln_project_messaging_message_subject');
+    $node->field_messaging_obs_message = _slnsite_field_init_var('sln_project_messaging_message_observer');
+    $node->field_messaging_sup_message = _slnsite_field_init_var('sln_project_messaging_message_supervisor');
+    
+    /*
+    $v = variable_get('sln_project_messaging_from', "");
+    if ($v)
+      $node->field_project_messaging_from = array(LANGUAGE_NONE => array(0 => array('value' => $v)));
+    
+    $v = variable_get('sln_project_messaging_message_subject', "");
+    if ($v)
+      $node->field_messaging_subject_message = array(LANGUAGE_NONE => array(0 => array('value' => $v)));
+    
+    $v = variable_get('sln_project_messaging_message_observer', "");
+    if ($v)
+      $node->field_messaging_obs_message = array(LANGUAGE_NONE => array(0 => array('value' => $v)));
+    
+    $v = variable_get('sln_project_messaging_message_supervisor', "");
+    if ($v)
+      $node->field_messaging_sup_message = array(LANGUAGE_NONE => array(0 => array('value' => $v)));
+    */
   } // sln_project_360
 } // slnsite_node_prepare
 
@@ -1030,3 +1059,96 @@ function slnsite_node_submit($node, $form, &$form_state) {
     _slnsite_project_360_node_submit($node);
   } // sln_project_360
 }
+
+
+/**
+ * Implements hook_preprocess_feedback_simple().
+ */
+/*function slnsite_preprocess_feedback_simple(&$variables) {
+  // Add modal_forms classes.
+  $variables['class'][] = 'ctools-use-modal';
+  // Uncomment either small, medium or large.
+  $variables['class'][] = 'ctools-modal-modal-popup-small';
+  // $variables['class'][] = 'ctools-modal-modal-popup-medium';
+  // $variables['class'][] = 'ctools-modal-modal-popup-large';
+} // */
+
+// http://willvincent.com/blog/adding-one-or-more-fields-drupal-7-contact-form
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function slnsite_form_contact_site_form_alter(&$form, &$form_state) {
+  
+  // Add a required textfield to collect page url to the form array.
+  $defaulturl = $_SERVER['HTTP_REFERER'] ? $_SERVER['HTTP_REFERER'] : $_SERVER['HTTP_HOST'];
+  $form['url'] = array(
+    '#title'    => t('Page URL'),
+    '#type'     => 'textfield',
+    '#required' => TRUE,
+    '#default_value' => $defaulturl,
+    '#description' => t("Enter the address for the page related to your feedback."),
+  );
+    
+  $alias = drupal_get_path_alias($defaulturl);
+  $p = strrpos($alias, '/');
+  $aname = $p ? substr($alias, $p+1) : $alias;
+  
+  $form['subject']['#default_value'] = "SLN Support: $aname";
+  $form['message']['#rows'] = 12;
+ 
+  // Re-sort the form so that we can ensure our phone number field appears
+  // in the right spot. We're going to do this by building an array of the
+  // form field keys, then looping through each and setting their weight.
+  // 
+  // Default fields on the contact form are:
+  // name    (Users Name)
+  // mail    (Users Email Address)
+  // subject (Email Subject)
+  // cid     (Category select list,
+  //            only visible if multiple contact categories are defined)
+  // message (Message textarea)
+  // copy    ('Send me a copy' checkbox)
+  // submit  (Submit button)
+ 
+  $order = array(
+    'name',
+    'mail',
+    'url',
+    'subject',
+    'cid',
+    'message',
+    'copy',
+    'submit'
+  );
+ 
+  foreach ($order as $key => $field) {
+    // Set/Reset the field's 
+    // weight to the array key value
+    // from our order array. 
+    $form[$field]['#weight'] = $key;
+  } // for
+} // slnsite_glue_form_contact_site_form_alter
+
+/**
+ * Implements hook_mail_alter().
+ */
+function slnsite_mail_alter(&$message) {
+
+  if ($message['id'] == 'contact_page_mail') {
+
+    //$message['subject'] .= t('[!category] !subject', $variables, array('langcode' => $language->language));
+  
+    global $user;
+    $variables = array('!sender-name' => $user->name, '!sender-mail' => $user->mail );
+    
+    if (count($message['body']))
+      $message['body'][0] = "";   // delete original first part of message
+
+    $message['body'][] = t("Reported by: !sender-name (!sender-mail)", $variables, array('langcode' => $language->language));
+
+    if (isset($message['params']['url']) && $message['params']['url'] != '') 
+      $message['body'][] = t('Page URL') .': '. $message['params']['url'];
+
+  } // contact_page_mail
+
+} // slnsite_mail_alter

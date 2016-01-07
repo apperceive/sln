@@ -273,7 +273,19 @@ function _slnsite_dashboard_page($acct = NULL) {
   else { //default
     if (_slnsite_user_has_director_role() && ($user->uid == $acct->uid)) {
       //$s .= "<h3>All Projects</h3>";
+      $s .= "<h3 class='title'>Open Projects</h3>";
       $s .= views_embed_view('projects_listing', 'block_1');
+      $archive = variable_get('sln_dashboard_archive_'.$user->name, 0);
+      if (arg(1) == 'archive')  {
+        variable_set('sln_dashboard_archive_'.$user->name, !$archive);
+        //$archive = !$archive;
+        drupal_goto('dashboard');
+      }
+      $label = $archive ? t('Hide') : t('Show');
+      $class = $archive ? t('fa fa-caret-square-o-up') : t('fa fa-caret-square-o-down');
+      $s .= "<h3 class='title'>Closed Projects <small class='toggle'><a href='/dashboard/archive'><span>$label</span><i class='$class'></i></small></h3>";
+      if ($archive)
+        $s .= views_embed_view('projects_listing', 'block_2');
     } // user is director
     else {
       // $s .= views_embed_view('user_survey_submissions', 'block', $acct->uid);
@@ -1117,7 +1129,6 @@ function _slnsite_project_submissions_summarize($project) {
   if (count($project->field_project_form_self))
     $surveys[] = $project->field_project_form_self[LANGUAGE_NONE][0]['nid'];
 
-
   if (count($project->field_project_form_planning)) 
     $surveys[] = $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'];
 
@@ -1484,8 +1495,14 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
 
   
   // TODO: only show if subject data exists
-  $comparedata = _slnsite_display_table(
+  // $termnames1 = _slnsite_vocabulary_term_names(SLN_BENCHMARK_TYPES);
+  // $cheaders1 = array_merge(array("Strategic Leader Actions", "Your Score"), $termnames1);
+  // $scores1 =_slnsite_submission_scores($surveynodeid, $submissionid);
+  // $cdata2 = _slnsite_comparison_data(SLN_INSTRUMENT_SLQ, $scores1);
+  //$comparedata = _slnsite_display_table($cheaders1, $cdata2, "sln-compare-table");
 
+  $comparedata = _slnsite_display_table(
+  
     array_merge(
       array("Strategic Leader Actions", "Your Score"),
       _slnsite_vocabulary_term_names(SLN_BENCHMARK_TYPES)
@@ -1497,8 +1514,6 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
     ),
     "sln-compare-table"
   );
-
-
 
   $plandata = "";
   $mapdata = "";
@@ -1591,9 +1606,6 @@ function _slnsite_submission_report($project, $surveynode, $submission, $templat
       */
 
       $mapchartdata = _slnsite_display_table(array('Skill', "Observer ($obscnt)", 'Supervisor', 'Self'), $mcdata2, 'sln-summary-radar-table');
-
-
-
     } // $templatetid == SLN_TEMPLATE_SLQ360_SUBMISSION_REPORT
 
 
@@ -2155,10 +2167,11 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
    '#value' => is_object($project) ? $project->nid : NULL,
    );
 
-
+  $preview = isset($form_state['values']['show_preview']) && $form_state['values']['show_preview'];
 
   $form['preview'] = array(
-   '#markup' => isset($form_state['values']['show_preview']) ? _slnsite_message_preview($project, $recipients, $form_state['values']) : "",
+   //'#markup' => isset($form_state['values']['show_preview']) ? _slnsite_message_preview($project, $recipients, $form_state['values']) : "",
+   '#markup' => $preview ? _slnsite_message_preview($project, $recipients, $form_state['values']) : "",
    );
 
    $form['messagingbookmark'] = array(
@@ -2209,41 +2222,6 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
   
   } // 360
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-  $form['message']['actions'] = array(
-    '#type' => 'actions'
-  );  
-
-  $form['message']['actions']['save'] = array(
-   '#type' => 'submit',
-   '#value' => t('Save as Default Email Templates'),
-   '#submit' => array('_slnsite_project_messaging_form_template_save'),
-
-
-   '#attributes' => array('disabled' => 'disabled'),
-  );
-
-  $form['message']['actions']['load'] = array(
-   '#type' => 'submit',
-   '#value' => t('Load Default Email Templates'),
-
-   '#submit' => array('_slnsite_project_messaging_form_template_load'),
-   '#attributes' => array('disabled' => 'disabled'),
-  );
-
-  
   $v = count($project->field_messaging_obs_message) ? $project->field_messaging_obs_message[LANGUAGE_NONE][0]['value']: NULL;
   if (!drupal_strlen($v))
     $v = variable_get('sln_project_messaging_message_observer', "Please take the survey at <a href='%survey'>%survey</a> to evaluate %subject.");
@@ -2257,6 +2235,28 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
    '#tree' => TRUE,
   );
 
+  $form['message']['actions'] = array(
+    '#type' => 'actions'
+  );  
+
+  $form['message']['actions']['save'] = array(
+   '#type' => 'submit',
+   '#value' => t('Save as Default Email Templates'),
+   '#attributes' => array('title' => t('Save changes to message templates and make them the default for new projects and for use with "Load".')),
+   '#submit' => array('_slnsite_project_messaging_form_template_save_vars'),
+
+   //'#submit' => array('_slnsite_project_messaging_form_template_save'),
+   //'#attributes' => array('disabled' => 'disabled'),
+  );
+
+  $form['message']['actions']['load'] = array(
+   '#type' => 'submit',
+   '#value' => t('Load Default Email Templates'),
+   '#attributes' => array('title' => t('Replace all message templates with the default templates and save for this project.')),
+   '#submit' => array('_slnsite_project_messaging_form_template_load_vars'),
+   //'#attributes' => array('disabled' => 'disabled'),
+  );
+  
   $v = count($project->field_project_messaging_topic) ? $project->field_project_messaging_topic[LANGUAGE_NONE][0]['value']: NULL;
   if (!drupal_strlen($v))
     $v = variable_get('sln_project_messaging_topic', "%project");
@@ -2317,25 +2317,24 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
     '#type' => 'actions'
   );
 
-
-
-
-
-
-
-
-
+  $form['actions']['save'] = array(
+   '#type' => 'submit',
+   '#value' => t('Save Changes Only'),
+   '#attributes' => array('title' => t('Save changes to message templates, do not send or preview emails at this time.')),
+   '#submit' => array('_slnsite_project_messaging_form_template_save'),
+   //'#attributes' => array('disabled' => 'disabled'),
+  );
   $form['actions']['send'] = array(
    '#type' => 'submit',
-   '#value' => t('Send'),
-
+   '#value' => t('Save and Send Emails'),
+   '#attributes' => array('title' => t('Save changes to message templates and send out emails.')),
    //'#attributes' => array('disabled' => 'disabled'),
   );
 
   $form['actions']['preview'] = array(
    '#type' => 'submit',
-   '#value' => t('Preview'),
-
+   '#value' => t('Save and Preview Emails'),
+   '#attributes' => array('title' => t('Save changes to message templates, display a preview of all messages without sending yet.')),
    '#submit' => array('_slnsite_project_messaging_form_preview'),
   );
 
@@ -2347,8 +2346,8 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
 
 function _slnsite_project_messaging_form_validate($form, &$form_state) {
 
-  // check for valid emails
-  // warn of invalid tokens?
+  // TODO: check for valid emails
+  // TODO: warn of invalid tokens?
 
   $project_nid = $form_state['values']['project_nid'];
   $project = node_load($project_nid);
@@ -2364,15 +2363,13 @@ function _slnsite_project_messaging_form_validate($form, &$form_state) {
   } // if project
   //dpm(get_defined_vars());
 
-
-
 } // _slnsite_project_messaging_form
 
 function _slnsite_project_messaging_form_submit($form, &$form_state) {
   global $user;
   $form_state['rebuild'] = TRUE;
   
-
+  _slnsite_messages_save($form_state);
 
   if (!(array_key_exists('values', $form_state) && array_key_exists('recipients', $form_state['values']) && is_array($form_state['values']['recipients']))) {
     drupal_set_message("No email recipients selected.");
@@ -2433,47 +2430,48 @@ function _slnsite_project_messaging_form_preview($form, &$form_state) {
   // allow cut and paste from 'preview' to own emails in easy to use format
   $form_state['rebuild'] = TRUE;
   $form_state['values']['show_preview'] = TRUE;
+  _slnsite_messages_save($form_state);
 
   //dpm(get_defined_vars());
 
 } // _slnsite_project_messaging_form_preview
 
 function _slnsite_project_messaging_form_template_save($form, &$form_state) {
-  $form_state['rebuild'] = TRUE;
+  $form_state['rebuild'] = FALSE;
   $form_state['values']['show_preview'] = FALSE;
+  _slnsite_messages_save($form_state);
+} // _slnsite_project_messaging_form_template_save
 
+function _slnsite_project_messaging_form_template_save_vars($form, &$form_state) {
+  $form_state['rebuild'] = FALSE;
+  $form_state['values']['show_preview'] = FALSE;
+  variable_set('sln_project_messaging_message_subject', $form_state['values']['message']['subject']);
+  variable_set('sln_project_messaging_message_supervisor', $form_state['values']['message']['supervisor']);
+  variable_set('sln_project_messaging_message_observer', $form_state['values']['message']['observer']);
+  variable_set('sln_project_messaging_topic', $form_state['values']['subject']);
+  variable_set('sln_project_messaging_from', $form_state['values']['from']);
+  _slnsite_messages_save($form_state); 
 
-  
   // save form email values as vars
-
-
-
-
-
-
-
-
-
   drupal_set_message("Messages saved as default for new projects and for 'Load' in existing projects.", 'info');
+} // _slnsite_project_messaging_form_template_save_vars
 
-} // _slnsite_project_messaging_form_preview
-
-function _slnsite_project_messaging_form_template_load($form, &$form_state) {
-  $form_state['rebuild'] = TRUE;
+function _slnsite_project_messaging_form_template_load_vars($form, &$form_state) {
+  $form_state['rebuild'] = FALSE;
   $form_state['values']['show_preview'] = FALSE;
-  
+  $form_state['values']['message']['observer'] = variable_get('sln_project_messaging_message_observer', "Please take the survey at <a href='%survey'>%survey</a> to evaluate %subject.");
+  $form_state['values']['message']['subject'] = variable_get('sln_project_messaging_message_subject', "Please take the survey at <a href='%survey'>%survey</a> to evaluate %subject.");
+  $form_state['values']['message']['supervisor'] = variable_get('sln_project_messaging_message_supervisor', "Please take the survey at <a href='%survey'>%survey</a> to evaluate %subject.");
+  $form_state['values']['from'] = variable_get('sln_project_messaging_from', "%researcher");
+  $form_state['values']['topic'] = variable_get('sln_project_messaging_topic', "%project");
+  _slnsite_messages_save($form_state);
   // are you sure?
   // copy vars into project fields or $form_state['values'] or both
   // save project? note this is a form submit, not a node edit
 
-
-
-
-
-
   drupal_set_message("Default messages loaded into this project.", 'info');
 
-} // _slnsite_project_messaging_form_preview
+} // _slnsite_project_messaging_form_template_load_vars
 
 // obsolete?
 function _slnsite_project_plan($project) {
@@ -2508,8 +2506,8 @@ function _slnsite_project_plan($project) {
  *
  */
 function _slnsite_project_results_radar_chart($projectid, $labels, $data, $obscount = 0) {
-  $path = '/var/www/sln.thestrategicleader.org/public/sites/all/libraries/pchart';
-
+  //$path = '/var/www/sln.thestrategicleader.org/public/sites/all/libraries/pchart';
+  $path = $_SERVER["DOCUMENT_ROOT"] . "/sites/all/libraries/pchart";
   include("$path/class/pData.class.php");
   include("$path/class/pDraw.class.php");
   include("$path/class/pImage.class.php");
@@ -2708,6 +2706,7 @@ function _slnsite_project_results($project) {
 
       $s .= "<canvas id='sln-radar-canvas' height='500' width='500'></canvas>\n";
       //$s .= "<img id='sln-radar-img' src='http://sln.thestrategicleader.org/sites/default/files/XXXlogo.png' style='display: none;' height='500' width='500'/>\n";
+      //$s .= "<img id='sln-radar-img' src='/sites/default/files/XXXlogo.png' style='display: none;' height='500' width='500'/>\n";
       $s .= "<div id='sln-radar-legend'></div>\n";
       
 

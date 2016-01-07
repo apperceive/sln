@@ -42,14 +42,15 @@
  * the view is modified.
  */
  
- //dpm($row);
+  //dpm($row);
  
   $submissions = _slnsite_project_submissions($row->nid);
  
   $project = node_load($row->nid);
 
- // skip planning form 
-  $planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ?  $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  // skip planning form 
+  //$planning_form = is_array($project->field_project_form_planning[LANGUAGE_NONE]) ?  $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
+  $planning_form = isset($project->field_project_form_planning[LANGUAGE_NONE]) && is_array($project->field_project_form_planning[LANGUAGE_NONE]) ?  $project->field_project_form_planning[LANGUAGE_NONE][0]['nid'] : 0;
   
   
   //$planning_form =  _slnsite_array_keys_exist(array('field_project_form_planning', LANGUAGE_NONE, 0, 'nid'));
