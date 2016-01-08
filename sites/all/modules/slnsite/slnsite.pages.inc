@@ -3333,9 +3333,10 @@ function _slnsite_project_messaging_history($project) {
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($curl);
     curl_close($curl);    
-     $data = drupal_json_decode($response);
+    $data = drupal_json_decode($response);
     
     // TODO: check for error $data['status'] == "error" 
+    dpm(get_defined_vars());
         
     foreach ($data as $event) {
       $project = $token = "";

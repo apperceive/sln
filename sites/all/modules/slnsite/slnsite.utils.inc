@@ -2012,8 +2012,7 @@ SELECT entity_id, 'subject' AS survey FROM sln.field_data_field_project_subject 
 UNION
 SELECT entity_id, 'supervisor' AS survey FROM sln.field_data_field_project_supervisor WHERE field_project_supervisor_field_project_supervisor_email_value = :email
 EOS;
-  
-  
+
   // TOOD: test for survey completeness
   
   $q = db_query($sql, array(':email' => $email));

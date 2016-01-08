@@ -23,7 +23,8 @@ able to define the value-label pair for each option.
 Dependencies
 ============
 This module can be used by itself. However, exporting capabilities are provided
-by enabling the Chaos tools suite module (ctools).
+by enabling the Chaos tools suite module (ctools). In order to import ctools
+exports, users must have the "Use CTools importer" trusted permission.
 
 To do
 =====
