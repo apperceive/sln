@@ -45,7 +45,8 @@ if (!defined('_MPDF_TEMP_PATH')) define("_MPDF_TEMP_PATH", _MPDF_PATH.'tmp/');
 if (!defined('_MPDF_TTFONTPATH')) { define('_MPDF_TTFONTPATH',_MPDF_PATH.'ttfonts/'); }
 if (!defined('_MPDF_TTFONTDATAPATH')) { define('_MPDF_TTFONTDATAPATH',_MPDF_PATH.'ttfontdata/'); }
 
-$errorlevel=error_reporting();
+//$errorlevel=error_reporting();
+$errorlevel=error_reporting(E_ALL ^ E_DEPRECATED);
 $errorlevel=error_reporting($errorlevel & ~E_NOTICE);
 
 //error_reporting(E_ALL);

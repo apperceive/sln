@@ -3324,6 +3324,9 @@ function _slnsite_project_messaging_history($project) {
   $participants = _slnsite_project_participants($project->nid);
   $uri = MANDRILLAPP_API_ENDPOINT . "messages/search.json";
   foreach ($participants as $ndx => $p) {
+    
+    set_time_limit(30);
+    
     //$json = "{'key' : '" . MANDRILLAPP_API_KEY . "', 'query' : 'email: $ndx'}";
     $json = array('key' => MANDRILLAPP_API_KEY, 'query' => "email: $ndx", 'date_from' => "2014-09-01",);
     $curl = curl_init();
@@ -3332,22 +3335,31 @@ function _slnsite_project_messaging_history($project) {
     curl_setopt($curl, CURLOPT_URL, $uri);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($curl);
-    curl_close($curl);    
+    curl_close($curl);
+    
     $data = drupal_json_decode($response);
     
     // TODO: check for error $data['status'] == "error" 
-    dpm(get_defined_vars());
-        
+    //dpm(get_defined_vars());
+    
+    // TODO: check that data is array
+    
     foreach ($data as $event) {
       $project = $token = "";
+      
       if (array_key_exists('metadata', $event) && array_key_exists('project', $event['metadata'])) 
         $project = $event['metadata']['project'];
+      
       if (array_key_exists('metadata', $event) && array_key_exists('token', $event['metadata'])) 
         $token = $event['metadata']['token'];
+      
       $id = "<small>" . $event['_id'] . "</small>";
       // TODO: use API call to message.info(string key, string id)  or message.content(string key, string id)
+      
       $link = l("view", "messaging/history/" . $event['_id'] );
+      
       $rows[] = array(date('M d, Y h:i a', $event['ts']), /*$id,*/ $event['email'], $event['sender'], $event['subject'], $event['state'], $event['opens'], $event['clicks'], /*$link, $token, $project */);
+      
     } // foreach data
   } // foreach participant
   $headers = array('date time', /*'msg id',*/ 'to', 'from', 'topic', 'state', 'opens', 'clicks', /*'link to email', 'token', 'project'*/);
