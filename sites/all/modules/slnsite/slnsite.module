@@ -1095,7 +1095,7 @@ function slnsite_form_contact_site_form_alter(&$form, &$form_state) {
   drupal_set_title("Feedback Form");
   
   $form['instructions'] = array(
-    '#markup' => t("<strong>Use this form to report problems, give feedback or ask questions about site use. An email will be sent to the site administrator containing your comments.  If possible, please attach a related screen snapshot.</strong>"),
+    '#markup' => t("<strong>Use this form to report problems, give feedback or ask questions about site use. An email will be sent to the site administrator containing your comments.  If possible, please attach a link to a related screen snapshot.</strong>"),
   );
   
   // Add a required textfield to collect page url to the form array.
