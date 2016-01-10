@@ -1,5 +1,7 @@
 <?php
 
+//require_once(DRUPAL_ROOT . '/sites/all/libraries/hashids.php/lib/Hashids/Hashids.php');
+
 /**
  * @file
  * Page callbacks for the utility functions in the slnsite module.
@@ -1276,17 +1278,73 @@ function _slnsite_project_presave($node) {
  */
 function _slnsite_project_360_validate($node, $form, &$form_state) {
 
-  // use form_set_error($element_name, $message);   // name has format 'foo][bar][baz'
-
-  // check for valid emails
-  // check for email dups
-  // require names and emails
-  // require subject
+  $project_nid = $node->nid;
+  $project_type = SLN_PROJECT_TYPE_DEFAULT;
+  if (count($node->field_project_type))
+    $project_type = $node->field_project_type[LANGUAGE_NONE][0]['tid'];
+  
+  // check for valid emails - done
+  // check for email dups - done
+  // require names and emails?
+  
+  // just notify (no error):
+  // require subject?
   // require supervisor?
-  // require at least one observer
+  // require at least one observer?
   
+  // NOTE: dpm may cause a long delay (60 secs) in add/remove items (observers) and temp file warning in log re nginx fastcgi response
+  //dpm($form_state);
   
-  // issue warnings, but not form_set_error for some things?
+  $values = $form_state['values'];
+  $emails = array();
+  
+  // ONLY 360, NOT 180:
+  if ($project_type == SLN_PROJECT_TYPE_360) {
+    
+    if (array_key_exists(LANGUAGE_NONE, $node->field_project_subject) && count($node->field_project_subject[LANGUAGE_NONE]))
+      $subemail = trim($node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_email'][LANGUAGE_NONE][0]['value']);
+    
+    if ($subemail && !valid_email_address($subemail))
+      form_set_error("field_project_subject][und][$ndx", "Invalid email address: $subemail");
+      
+    if ($subemail) $emails[] = $subemail;
+
+    if (array_key_exists(LANGUAGE_NONE, $node->field_project_supervisor) && count($node->field_project_supervisor[LANGUAGE_NONE]))
+      $supemail = trim($node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_email'][LANGUAGE_NONE][0]['value']);
+   
+    if ($supemail && !valid_email_address($supemail))
+      form_set_error("field_project_supervisor][und][$ndx", "Invalid email address: $supemail");
+    
+    if ($supemail && ($supemail == $subemail)) 
+      form_set_error("field_project_supervisor][und][$ndx", "Duplicate email address: $supemail");
+      
+    if ($supemail) $emails[] = $supemail;
+     
+ 
+  } // SLN_PROJECT_TYPE_360
+  
+  $observers = $values['field_project_observers'][LANGUAGE_NONE]; 
+  
+  //watchdog('markus', "observers: :data", array('data' => var_export($observers,1)), WATCHDOG_INFO);
+  
+  foreach ($observers as $ndx => $observer) {
+    // skip button values and the like
+    if (!is_array($observer) || !array_key_exists('field_project_observer_email', $observer) || !array_key_exists(LANGUAGE_NONE, $observer['field_project_observer_email'])) break;  
+    
+    $obsemail = "";
+
+    if (count($observer['field_project_observer_email'][LANGUAGE_NONE]))
+      $obsemail = trim($observer['field_project_observer_email'][LANGUAGE_NONE][0]['value']);
+    
+    if ($obsemail && !valid_email_address($obsemail))
+      form_set_error("field_project_observers][und][$ndx", "Invalid email address: $obsemail");
+
+    if ($obsemail && in_array($obsemail, $emails)) 
+      form_set_error("field_project_observers][und][$ndx", "Duplicate email address: $obsemail");
+      
+    if ($obsemail) $emails[] = $obsemail;
+     
+  } // foreach observer
 
 } // _slnsite_project_360_validate
 
@@ -1419,19 +1477,22 @@ function _slnsite_project_360_presave($node) {
     return;
   } // status
   
-  // reassign ownership to manager/researcher 
-  // assert manager_uid field exists (it's required)
-  $manager_uid = $node->field_project_manager[LANGUAGE_NONE][0]['uid'];
-  $node->uid = $manager_uid;
-
-  // set any missing tokens
-  // first check if subfield has any elements (value, format, safe_value_)
+  // reassign ownership to manager/researcher if one selected
+  if (isset($node->field_project_manager[LANGUAGE_NONE])) {
+    $manager_uid = $node->field_project_manager[LANGUAGE_NONE][0]['uid'];
+    $node->uid = $manager_uid;
+  }
+  
+  // set any missing tokens, trim emails
+  // first check if subfield has any elements (value, format, safe_value)
   // assert field always exists and is an array, but has no items before initialization
   $token = "";
   if (array_key_exists(LANGUAGE_NONE, $node->field_project_subject) && count($node->field_project_subject[LANGUAGE_NONE])) {
     $token = $node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_token'][LANGUAGE_NONE][0]['value'];  
     if (!drupal_strlen($token))
-      $node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_token'][LANGUAGE_NONE][0]['value'] = uniqid();
+      $node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_token'][LANGUAGE_NONE][0]['value'] = _slnsite_uniqid($node->nid);
+    //trim emails
+    $node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_email'][LANGUAGE_NONE][0]['value'] = trim($node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_email'][LANGUAGE_NONE][0]['value']);
   } // if count
     
   //dpm(get_defined_vars());    
@@ -1440,7 +1501,9 @@ function _slnsite_project_360_presave($node) {
   if (array_key_exists(LANGUAGE_NONE, $node->field_project_supervisor) && count($node->field_project_supervisor[LANGUAGE_NONE])) {
     $token = $node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_token'][LANGUAGE_NONE][0]['value'];  
     if (!drupal_strlen($token))
-      $node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_token'][LANGUAGE_NONE][0]['value'] = uniqid();
+      $node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_token'][LANGUAGE_NONE][0]['value'] = _slnsite_uniqid($node->nid);
+    //trim emails
+    $node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_email'][LANGUAGE_NONE][0]['value'] = trim($node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_email'][LANGUAGE_NONE][0]['value']);
   } // if count
   
   $observers = $node->field_project_observers[LANGUAGE_NONE]; 
@@ -1449,9 +1512,10 @@ function _slnsite_project_360_presave($node) {
     if (array_key_exists('field_project_observer_token', $observer) && array_key_exists(LANGUAGE_NONE, $observer['field_project_observer_token']) && count($observer['field_project_observer_token'][LANGUAGE_NONE])) {
       $token = $observer['field_project_observer_token'][LANGUAGE_NONE][0]['value'];
       if (!drupal_strlen($token)) 
-        $node->field_project_observers[LANGUAGE_NONE][$ndx]['field_project_observer_token'][LANGUAGE_NONE][0]['value'] = uniqid();
+        $node->field_project_observers[LANGUAGE_NONE][$ndx]['field_project_observer_token'][LANGUAGE_NONE][0]['value'] = _slnsite_uniqid($node->nid, $ndx);
+      //trim emails
+      $node->field_project_observers[LANGUAGE_NONE][$ndx]['field_project_observer_email'][LANGUAGE_NONE][0]['value'] = trim($observer['field_project_observer_email'][LANGUAGE_NONE][0]['value']);
     } // if count
-    // dpm(get_defined_vars());
   } // foreach observer
 
   return;
@@ -1815,7 +1879,7 @@ function _slnsite_project_status_report($project_or_id) {
     //dpm($node);
     if (isset($node->field_project_type) && count($node->field_project_type) && array_key_exists(LANGUAGE_NONE, $node->field_project_type) && $node->field_project_type[LANGUAGE_NONE][0]['tid'] == SLN_PROJECT_TYPE_360) {
       if (!isset($node->field_project_subject) || !count($node->field_project_subject) || !count($node->field_project_subject[LANGUAGE_NONE])) {
-        $s .= "<li>You must define a subject for the project.</li>";
+        $s .= "<li>Next step: define a subject for the project.</li>";
       } 
       else {
         if (!drupal_strlen(trim($node->field_project_subject[LANGUAGE_NONE][0]['field_project_subject_name'][LANGUAGE_NONE][0]['value'])))
@@ -1825,7 +1889,7 @@ function _slnsite_project_status_report($project_or_id) {
       }
       /*
       if (!count($node->field_project_supervisor) || !count($node->field_project_supervisor[LANGUAGE_NONE])) {
-        $s .= "<li>You must define a supervisor for the project.</li>";
+        $s .= "<li>Next step: define a supervisor for the project.</li>";
       } 
       else {
         if (!drupal_strlen(trim($node->field_project_supervisor[LANGUAGE_NONE][0]['field_project_supervisor_name'][LANGUAGE_NONE][0]['value'])))
@@ -1835,7 +1899,7 @@ function _slnsite_project_status_report($project_or_id) {
       }
       */
       if (!isset($node->field_project_observers) || !count($node->field_project_observers) || !count($node->field_project_observers[LANGUAGE_NONE])) {
-        $s .= "<li>You must define some observers/participants for the project.</li>";
+        $s .= "<li>Next step: add observers/participants for the project.</li>";
       } 
       else {
         $observers = $node->field_project_observers[LANGUAGE_NONE];
@@ -2177,6 +2241,7 @@ function _slnsite_messages_save($form_state) {
     $project->field_messaging_obs_message = _slnsite_field_init($values['message']['observer']);
     $project->field_project_messaging_topic = _slnsite_field_init($values['subject']);
     $project->field_project_messaging_from = _slnsite_field_init($values['from']);
+   
     node_save($project);
     drupal_set_message("Project messages updated.", 'info');
   } // project
@@ -2184,10 +2249,22 @@ function _slnsite_messages_save($form_state) {
 
 function _slnsite_field_init($value = "", $retval = NULL, $key = 'value') {  
   if (!is_string($key)) return $retval;
-  return array(LANGUAGE_NONE => array(0 => array($key => $value)));
-} // 
+
+  if (is_string($value) && $key && is_string($key))
+    return array(LANGUAGE_NONE => array(0 => array($key => $value)));
+  return array(LANGUAGE_NONE => array(0 => $value));
+  } // _slnsite_field_init
 
 function _slnsite_field_init_var($varname = '', $retval = '', $key = 'value') {
   if (!is_string($varname) || !is_string($key)) return $retval;
   return _slnsite_field_init(variable_get($varname, $retval), $key, $retval);
 } // _slnsite_field_init_var
+
+
+/* generate a unique, random hash for use as a participant token */
+// todo: ensure no collisions?
+// todo: use project nid, survey nid and delta (not reversable in general)
+function _slnsite_uniqid($nid, $delta = 0) {
+  $hashid = hashids_generate($nid, $delta , rand());
+  return $hashid;
+}  /// _slnsite_uniqid

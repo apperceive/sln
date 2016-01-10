@@ -122,6 +122,15 @@ function slnsite_menu() {
     'file' => 'slnsite.pages.inc',
   );
 
+  $items['slnsearch'] = array(
+    'title' => 'SLN Project Search',
+    'page callback' => '_slnsite_project_search',
+    'access callback' => TRUE,        // TODO: assume auth role minimum
+    'type' => MENU_CALLBACK,
+    'file' => 'slnsite.pages.inc',
+    'page arguments' => array(1),     // search string
+  );
+
   /*
   $items['dashboard/inbox'] = array(
     'title' => 'Inbox',
@@ -1081,6 +1090,14 @@ function slnsite_node_submit($node, $form, &$form_state) {
  */
 function slnsite_form_contact_site_form_alter(&$form, &$form_state) {
   
+  //dpm($form);
+  
+  drupal_set_title("Feedback Form");
+  
+  $form['instructions'] = array(
+    '#markup' => t("<strong>Use this form to report problems, give feedback or ask questions about site use. An email will be sent to the site administrator containing your comments.  If possible, please attach a related screen snapshot.</strong>"),
+  );
+  
   // Add a required textfield to collect page url to the form array.
   $defaulturl = $_SERVER['HTTP_REFERER'] ? $_SERVER['HTTP_REFERER'] : $_SERVER['HTTP_HOST'];
   $form['url'] = array(
@@ -1096,7 +1113,7 @@ function slnsite_form_contact_site_form_alter(&$form, &$form_state) {
   $aname = $p ? substr($alias, $p+1) : $alias;
   
   $form['subject']['#default_value'] = "SLN Support: $aname";
-  $form['message']['#rows'] = 12;
+  $form['message']['#rows'] = 8;
  
   // Re-sort the form so that we can ensure our phone number field appears
   // in the right spot. We're going to do this by building an array of the
@@ -1111,16 +1128,20 @@ function slnsite_form_contact_site_form_alter(&$form, &$form_state) {
   // message (Message textarea)
   // copy    ('Send me a copy' checkbox)
   // submit  (Submit button)
+  
+  // contact form attachments module added 2016-01-08
  
   $order = array(
+    'instructions',
     'name',
     'mail',
     'url',
     'subject',
     'cid',
     'message',
+    'attachments',
     'copy',
-    'submit'
+    'submit',
   );
  
   foreach ($order as $key => $field) {
@@ -1155,3 +1176,58 @@ function slnsite_mail_alter(&$message) {
   } // contact_page_mail
 
 } // slnsite_mail_alter
+
+function slnsite_block_info() {
+  $blocks = array();
+  $blocks['slnsearch'] = array(
+    'info' => t('SLN Participant Search'),
+    //'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+} // slnsite_block_info
+
+/**
+ * Implements hook_block_view().
+ */
+function slnsite_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'slnsearch':
+      $block['subject'] = t('Locate Participant');
+      $form = drupal_get_form('_slnsite_search_form');
+      $block['content'] = drupal_render($form);
+      break;
+  }
+  return $block;
+} // slnsite_block_view
+
+function _slnsite_search_form($form, &$form_state) {
+  
+  $form = array(
+    '#action' => '/slnsearch'
+  );
+  
+  $form['q'] = array(
+    '#type' => 'textfield',
+    //'#title' => t('Search'), 
+    '#default_value' => '',
+    '#size' => 30, 
+    '#maxlength' => 255, 
+    '#required' => FALSE,
+    '#description' => t("Enter a name, email or token for a project participant."),
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => t('Search'),
+  );
+  
+  return $form;
+} // _slnsite_search_form
+
+function _slnsite_search_form_submit($form, &$form_state) {
+  $q = $form_state['values']['q'];
+  drupal_goto('slnsearch' . ($q ? "/$q" : "")); 
+} // _slnsite_search_form_submit
+
+

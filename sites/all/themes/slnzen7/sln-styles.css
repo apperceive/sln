@@ -771,7 +771,30 @@ input[type='submit'] {
   font-size: 75%;
 }
 
+.page-dashboard .title .add  span {
+  display: inline-block;
+  padding: 0 10px;
+}
+
+.page-dashboard .title .add  span fa {
+  font-weight: bold;
+}
+
 .page-dashboard .title .toggle  span {
   display: inline-block;
   padding: 0 10px;
 }
+
+.slnsearch-results li strong {
+  color: red;
+}
+
+.page-slnsearch .form-item-q ,
+#block-slnsite-slnsearch .form-item-q {
+  margin: 0;  
+}
+
+.page-slnsearch #content > .item-list  {
+  margin-top: 30px;  
+}
+

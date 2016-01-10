@@ -268,12 +268,12 @@ function _slnsite_dashboard_page($acct = NULL) {
       //$s .= "<h3>Your research projects</h3>";
       $s .= views_embed_view('projects_listing', 'block_5', $acct->uid);
 
-    } // user is director
+    } // user is director 
   }
   else { //default
     if (_slnsite_user_has_director_role() && ($user->uid == $acct->uid)) {
-      //$s .= "<h3>All Projects</h3>";
-      $s .= "<h3 class='title'>Open Projects</h3>";
+      //$s .= "<h4>All Projects</h4>";
+      $s .= "<h4 class='title'>Active Projects <small class='add'><a href='/node/add/sln-project-360' title='Create a new project...'><span>Create Project</span><i class='fa fa-plus-square-o'></i></a></small></h4>";
       $s .= views_embed_view('projects_listing', 'block_1');
       $archive = variable_get('sln_dashboard_archive_'.$user->name, 0);
       if (arg(1) == 'archive')  {
@@ -283,7 +283,7 @@ function _slnsite_dashboard_page($acct = NULL) {
       }
       $label = $archive ? t('Hide') : t('Show');
       $class = $archive ? t('fa fa-caret-square-o-up') : t('fa fa-caret-square-o-down');
-      $s .= "<h3 class='title'>Closed Projects <small class='toggle'><a href='/dashboard/archive'><span>$label</span><i class='$class'></i></small></h3>";
+      $s .= "<h4 class='title'>Archived Projects <small class='toggle'><a href='/dashboard/archive' title='$label archived projects...'><span>$label Archive</span><i class='$class'></i></a></small></h4>";
       if ($archive)
         $s .= views_embed_view('projects_listing', 'block_2');
     } // user is director
@@ -1859,7 +1859,7 @@ function _slnsite_project_import($form, &$form_state, $project) {
     '#rows' => '8',
     '#columns' => '40',
     '#default_value' => '',
-    '#description' => "Enter email addresses, one per line. Optionally include a comma and a single name field. For example, joe@example.com,Joe Smith",
+    '#description' => "Enter email addresses, one per line. Optionally include a comma and a single name field. For example: joe@example.com,Joe Smith",
    );
   
   // DONE: add hidden values for the other settings
@@ -2200,8 +2200,8 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
     $form['message']['subject'] = array(
      '#type' => 'text_format',
      '#title' => t('Subject Message'),
-     '#required' => TRUE,
-     '#default_value' => $v,
+     //'#required' => TRUE,                         // TODO: make this depend on subject settings
+     '#default_value' => is_array($v) ? $v['value'] : $v,
      '#rows' => 8,
      '#description' => "",
       '#tree' => TRUE,
@@ -2213,8 +2213,8 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
     $form['message']['supervisor'] = array(
      '#type' => 'text_format',
      '#title' => t('Supervisor Message'),
-     '#required' => TRUE,
-     '#default_value' => $v,
+     //'#required' => TRUE,                         // TODO: make this depend on supervisor settings
+     '#default_value' => is_array($v) ? $v['value'] : $v,
      '#rows' => 8,
      '#description' => "",
      '#tree' => TRUE,
@@ -2228,8 +2228,8 @@ function _slnsite_project_messaging_form($form, &$form_state, $project) {
   $form['message']['observer'] = array(
    '#type' => 'text_format',
    '#title' => t('Observer/Participant Message'),
-   '#required' => TRUE,
-   '#default_value' => $v,
+   //'#required' => TRUE,
+   '#default_value' => is_array($v) ? $v['value'] : $v,
    '#rows' => 8,
    '#description' => "",
    '#tree' => TRUE,
@@ -3433,7 +3433,56 @@ function _slnsite_survey_email_submit($form, &$form_state) {
   dpm(get_defined_vars());
 } // _slnsite_survey_email_submit
 
-
-
-
-
+// sln search results page
+    // search all project participants for partial match
+function _slnsite_project_search($q = '') {
+  $form = drupal_get_form('_slnsite_search_form');
+  $form['q']['#value'] = $q;
+  $s = drupal_render($form);
+  if ($q) {
+    $cnt = 0;
+    //$s .= "<h3>Search Results</h3>";
+    //$s .= "<ul class='slnsearch-results'>";
+    $tables = array('observers', 'supervisor', 'subject');
+    $columns = array('observer', 'supervisor', 'subject');
+    $fields = array('email', 'name', 'token');
+    $data = array();
+    foreach ($tables as $ndx => $table) {
+      $column = $columns[$ndx];
+      foreach ($fields as $field) {
+        $sql = "SELECT entity_id AS id, field_project_${table}_field_project_${column}_name_value as name, field_project_${table}_field_project_${column}_email_value as email , field_project_${table}_field_project_${column}_token_value as token FROM field_data_field_project_${table} where field_project_${table}_field_project_${column}_${field}_value LIKE :q";
+        //$s .= $sql . "<br/>";
+        $rs = db_query($sql, array(':q' => "%$q%"));        
+        foreach ($rs as $r) {
+          $nid = $r->id;
+          $project = node_load($nid);
+          if ($project) {
+            $cnt++;
+            $href = drupal_get_path_alias("node/$nid");
+            $pname = $project->title;
+            $upq = strtoupper($q);
+            $name = str_ireplace($q, "<strong>$upq</strong>", $r->name);
+            $email = str_ireplace($q, "<strong>$upq</strong>", $r->email);
+            $token = str_ireplace($q, "<strong>$upq</strong>", $r->token);
+            $group = isset($project->field_project_group[LANGUAGE_NONE]) ? $project->field_project_group[LANGUAGE_NONE][0]['value'] : "";
+            $t = "<li>$name ($email) ($token) $column in  <a href='/$href'>$pname - $group</a></li>";
+            //$data["$email-$nid"] = array($href, $pname, $name, $email, $token, $nid, $t);
+            $data["$email-$nid"] = array($t);  // remove dups when email and name both match
+            //$s .= $t;
+          }
+        }
+      }
+    }
+    //$s .= "</ul>";
+    $vars = array(
+      'items' => $data, 
+      'title' => 'Search Results', 
+      'type' => 'ul', 
+      'attributes' => array('class' => array('slnsearch-results')),
+    );
+    $s .= theme_item_list($vars);
+    if (!$cnt)
+      $s .= "<div>No results found for $q.</div>"; 
+  }
+  return $s;
+} // _slnsite_project_search

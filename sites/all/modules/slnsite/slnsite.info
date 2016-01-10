@@ -8,6 +8,8 @@ configure = admin/config/slnsite
 
 dependencies[] = webform
 dependencies[] = views
+dependencies[] = hashid
+dependencies[] = ctools
 
 
 files[] = slnsite.admin.pages.inc
