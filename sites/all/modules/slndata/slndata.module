@@ -2,3 +2,73 @@
  * @file
  * Drupal 7 version of slndata module.
  */
+require_once dirname(__FILE__) . '/../phpexcel/phpexcel.inc';
+//require_once(DRUPAL_ROOT . '/sites/all/libraries/hashids.php/lib/Hashids/Hashids.php');
+
+/**
+ * Implements hook_menu.
+ */
+function slndata_menu() {
+  $items = array();
+
+  $items['slndata/export'] = array(
+    'title' => 'Strategic Leader Network Survey Data Export',
+    //'page arguments' => array(),
+    'page callback' => '_slndata_export_data_form',
+    // TODO: admin permision access?
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    //'file' => 'slndata.pages.inc',
+  );
+
+  return $items;
+}
+ 
+ 
+
+ // not part of a project, but maybe a link in project for quick export
+
+ // export to spread sheet (1?), export to many spread sheets?
+ 
+ 
+ // column headers - where can we set these? 
+ // set up mapping from survey form_keys (or cids?) to export
+
+ // global site settings form? defaults
+ // export form too
+ 
+function _slndata_export_data_form($form, &$form_state) {
+  $filename = 'example.xls';
+  $path = _slndata_testSingleWorksheetExport($filename);
+  $form['link'] = array(
+    '#markup' => l('example.xls', $path),
+  );
+  return $form;
+}
+
+/**
+* Test a simple, single worksheet Excel export.
+*/
+function _slndata_testSingleWorksheetExport($filename) {
+  // Prepare the data.
+  $headers = array('Header 1', 'Header 2');
+
+  $data = array(
+    array('Data 1.1111', 'Data 1.2222'),
+    array('Data 22.11', 'Data 22.22'),
+    array('Data 33.11', 'Data 33.22')
+  );
+  
+  // TODO: get filename (server vs download/local?)
+
+  // in general use sites/default/files/slndata/data-$date.xls
+  
+  $path = file_create_filename($filename, 'sites/default/files/slndata');
+  
+  // $file_uri = file_create_url(file_build_uri('images/example.jpeg'));
+
+  phpexcel_export($headers, $data, $path);
+  
+  return $path;
+
+}

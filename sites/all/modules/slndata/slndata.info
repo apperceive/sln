@@ -1,12 +1,13 @@
 name = SLN Custom Data
 description = Create custom data tables for use in SLN Surveys
 package = Strategic Leader Network
-core=7.x
+core = 7.x
 php = 5.3
 
 configure = admin/config/slndata
 
 dependencies[] = slnsite
+dependencies[] = phpexcel
 
 files[] = slndata.module
 files[] = slndata.install
