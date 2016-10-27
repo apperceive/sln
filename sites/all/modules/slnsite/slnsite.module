@@ -435,6 +435,18 @@ function slnsite_menu() {
 } // slnsite_menu
 
 
+
+function slnsite_menu_alter(&$items) {
+  // Example - disable the page at node/add
+  // $items['node/add']['access callback'] = FALSE;
+  global $user;
+  //dpm(get_defined_vars());
+  if (!$user->uid) {
+    $items['user']['type'] = MENU_LOCAL_TASK;
+  }  // if anon
+} // slnsite_menu_alter
+
+
 /**
  * Menu loader callback. Load a webform node if the given nid is a webform. 
  * Allow token to act as report key too?
@@ -454,57 +466,6 @@ function slnsite_project_load($nid) {
   return FALSE;
 } // slnsite_project_load
 
-/**
- * Implements hook_mail().
- */
-function slnsite_mail($key, &$message, $params) {
-
-  switch ($key) {
-    case 'surveys':
-
-      break;
-    case 'survey':
-      //$msg = variable_get('ja_email_new_appraisal', '');
-      //$sub = "You have a new appraisal";
-      // mandrill.com metadata header is a "JSON-encoded set of key-value pairs as the value"
-      // http://mandrill.zendesk.com/entries/21786413
-      // "token" defined in mandrill dash
-      // add project id here
-      if (array_key_exists('token', $params))
-        $message['headers']['X-MC-Metadata'] = '{"token": "' .$params['token'] . '"}';
-      if (array_key_exists('project_nid', $params))
-        $message['headers']['X-MC-Metadata'] = '{"project": "' .$params['project_nid'] . '"}';
-      //$message['headers']['X-MC-Tags'] = 'slq,group?'; // instrument
-      break;
-    default:
-      //$msg = '';
-      //$sub = '';
-      // todo: log error
-      break;
-  } // switch
-
-  // note: to may be altered below
-  $message['to'] = $params['to'];
-  $message['from'] = $params['from'];
-  $message['subject'] = $params['subject'];
-  $message['headers']['From'] = $params['from'];
-  $message['headers']['Sender'] = $params['from'];
-  $message['headers']['Sender'] = $params['from'];
-  //$message['headers']['Reply-To'] = $params['reply_to'];
-
-  // check for test emails
-  $extra = "";
-  $test = trim(variable_get('slnsite_test_emails_list', ""));
-  if (drupal_strlen($test)) {
-    $extra = "<i><strong>NOTE:</strong> e-mail testing is on. this e-mail would normally go to " . $message['to'] . ". Visit <a href='/admin/config/slnsite/email'>admin/config/slnsite/email</a> to change this.</i>\n\n\n";
-    $message['to'] = $test;
-  }
-  $message['body'][] = $extra . $params['message'];
-
-  //dpm(get_defined_vars());
-
-  watchdog('slnsite', "Email sent to %to with subject %subject and body %body.", array('%to' => $message['to'], '%subject' => $message['subject'], '%body' => $message['body'] ), WATCHDOG_INFO);
-} // slnsite_mail
 
 /**
  * Implements hook_node_view().
@@ -1043,15 +1004,138 @@ xxxfunction slnsite_theme_registry_alter(&$theme_registry) {
 } // slnsite_theme_registry_alter
  */
 
-function slnsite_menu_alter(&$items) {
-  // Example - disable the page at node/add
-  // $items['node/add']['access callback'] = FALSE;
-  global $user;
+ 
+ 
+/**
+ * Implements hook_mail().
+ *
+ * Note: only called via drupal_mail('slnsite',...) so watchdog calls only fire off for project emails, not
+ * for contact, user emails or update notices, etc.
+ */
+function slnsite_mail($key, &$message, $params) {
+  
+  watchdog('slnsite', "hook_mail: " . var_export(array('key' => $key, 'message' => $message, 'params' => $params),1));
+  
+  switch ($key) {
+    case 'surveys':
+      break;
+    case 'survey':
+      //$msg = variable_get('ja_email_new_appraisal', '');
+
+      // mandrill.com metadata header is a "JSON-encoded set of key-value pairs as the value"
+      // http://mandrill.zendesk.com/entries/21786413
+      // "token" defined in mandrill dash
+      // add project id here
+      /*
+      if (array_key_exists('token', $params))
+        $message['headers']['X-MC-Metadata'] = '{"token": "' .$params['token'] . '"}';
+      if (array_key_exists('project_nid', $params))
+        $message['headers']['X-MC-Metadata'] = '{"project": "' .$params['project_nid'] . '"}';
+      */
+      //$message['headers']['X-MC-Tags'] = 'slq,group?'; // instrument
+      break;
+    default:
+      //$msg = '';
+      //$sub = '';
+      // todo: log error
+      break;
+  } // switch
+
+  
+  //$message['from'] = 'no-reply@360.thestrategicleader.org';
+  //$params['from'] = 'no-reply@360.thestrategicleader.org';
+  //$message['headers']['From'] = 'no-reply@360.thestrategicleader.org';
+  $message['from'] = 'survey@thestrategicleader.org';
+  $params['from'] = 'survey@thestrategicleader.org';
+  $message['headers']['From'] = 'survey@thestrategicleader.org';
+  
+  // note: to may be altered below
+  ///$message['to'] = $params['to'];
+  ///$message['from'] = $params['from'];
+  ///$message['subject'] = $params['subject'];
+  ///$message['headers']['From'] = $params['from'];
+  ///$message['headers']['Sender'] = $params['from'];
+  ///$message['headers']['Sender'] = $params['from'];
+  //$message['headers']['Reply-To'] = $params['reply_to'];
+  //if (!drupal_strlen($message['from'])) {
+  //}
+  
+  $message['subject'] = $params['subject'];
+
+  // check for test emails
+  $extra = "";
+  $test = trim(variable_get('slnsite_test_emails_list', ""));
+  if (drupal_strlen($test)) {
+    $extra = "<i><strong>NOTE:</strong> e-mail testing is on. this e-mail would normally go to " . $message['to'] . ". Visit <a href='/admin/config/slnsite/email'>admin/config/slnsite/email</a> to change this.</i>\n\n\n";
+    $message['to'] = $test;
+  }
+  $message['body'][] = $extra . $params['message'];
+
   //dpm(get_defined_vars());
-  if (!$user->uid) {
-    $items['user']['type'] = MENU_LOCAL_TASK;
-  }  // if anon
-} // slnsite_menu_alter
+
+  watchdog('slnsite', "Email sent to %to with subject %subject and body %body.", array('%to' => $message['to'], '%subject' => $message['subject'], '%body' => $message['body'] ), WATCHDOG_INFO);
+} // slnsite_mail
+
+
+/**
+ * Implements hook_mail_alter().
+ */
+function slnsite_mail_alter(&$message) {
+  
+  watchdog('slnsite', "hook_mail_alter: " . var_export($message, 1));
+
+  if ($message['id'] == 'contact_page_mail') {
+  
+    global $user;
+    global $language;
+    
+    //$message['subject'] .= t('[!category] !subject', $variables, array('langcode' => $language->language));
+    //$variables = array('!sender-name' => $user->name, '!sender-mail' => $user->mail );
+    //$variables = array('!sender-name' => $user->name, '!sender-mail' => $user->mail );
+    
+    if (count($message['body']))
+      $message['body'][0] = "";   // delete original first part of message
+
+    
+    // do not assume valid user object
+    if (is_object($user) && $user->uid)  {
+      //$message['body'][] = t("Reported by: !sender-name (!sender-mail)", $variables, array('langcode' => $language->language));
+      $message['body'][] = t("Reported by: !user-name (!user-mail)", array('!user-name' => $user->name, '!user-mail' => $user->mail ), array('langcode' => $language->language));
+    }
+    
+    if (isset($message['params']['url']) && $message['params']['url'] != '') 
+      $message['body'][] = t('Page URL') .': '. $message['params']['url'];
+    
+    if (stripos($message['from'], 'thestrategigleader.org') === False) {
+      // append to message and allow later code to alter email from field
+      $oldfrom = isset($message['from']) ? $message['from'] : "No email FROM field specified.";
+      $message['body'][] = t('Original reply to') .': '. $oldfrom;
+      //$message['headers']['Reply-To'] = $message['from'];
+      //$message['from'] = 'survey@thestrategicleader.org';   
+    }
+
+  } // contact_page_mail
+  
+  
+  
+  // enforce from and headers['from'] being a sending domain (thestrategicleader.org)
+  if (stripos($message['from'], 'thestrategicleader.org') === False) {
+    $oldfrom = isset($message['from']) ? $message['from'] : "";
+    $message['from'] = 'slnsite@thestrategicleader.org';
+    watchdog('slnsite', "Invalid domain fixed in email from field. Old from value: " . $oldfrom);  
+    if (!drupal_strlen($oldfrom) && drupal_strlen($message['headers']['From']))
+      $oldfrom = $message['headers']['From'];
+    if ($oldfrom) {
+      if (!isset($message['headers']['Reply-To']))
+        $message['headers']['Reply-To'] = $oldfrom;
+    if (!isset($message['headers']['Sender']))
+      $message['headers']['Sender'] = $oldfrom;
+    }
+  }
+  $message['headers']['From'] = $message['from'];
+    
+
+} // slnsite_mail_alter
 
 
 function slnsite_init() {
@@ -1152,30 +1236,6 @@ function slnsite_form_contact_site_form_alter(&$form, &$form_state) {
   } // for
 } // slnsite_glue_form_contact_site_form_alter
 
-/**
- * Implements hook_mail_alter().
- */
-function slnsite_mail_alter(&$message) {
-
-  if ($message['id'] == 'contact_page_mail') {
-  
-    global $user;
-    global $language;
-    
-    //$message['subject'] .= t('[!category] !subject', $variables, array('langcode' => $language->language));
-    $variables = array('!sender-name' => $user->name, '!sender-mail' => $user->mail );
-    
-    if (count($message['body']))
-      $message['body'][0] = "";   // delete original first part of message
-
-    $message['body'][] = t("Reported by: !sender-name (!sender-mail)", $variables, array('langcode' => $language->language));
-
-    if (isset($message['params']['url']) && $message['params']['url'] != '') 
-      $message['body'][] = t('Page URL') .': '. $message['params']['url'];
-
-  } // contact_page_mail
-
-} // slnsite_mail_alter
 
 function slnsite_block_info() {
   $blocks = array();
