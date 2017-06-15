@@ -1,0 +1,15 @@
+name = SLN Aggregate Data
+description = Create custom, aggregated data tables for use in SLN Surveys
+package = Strategic Leader Network
+core = 7.x
+php = 5.3
+
+configure = admin/config/slndata
+
+dependencies[] = slnsite
+;dependencies[] = phpexcel
+
+files[] = slndagg.module
+files[] = slnagg.install
+files[] = slnagg.tpl.php
+

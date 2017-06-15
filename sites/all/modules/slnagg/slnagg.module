@@ -1,0 +1,574 @@
+<?php /**
+ * @file
+ * Drupal 7 version of slnagg module.
+ */
+
+ 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+define('SLNAGG_PATH', drupal_get_path('module', 'slnagg'));
+
+
+define('SLQ360_Managing', '(q2+q5+q8+q14+q18+q24+q25+q28+q31)/9');
+define('SLQ360_Transforming', '(q13+q15+q21+q23+q29+q32)/6');
+define('SLQ360_Bonding', '(q3+q6+q10+q11+q17+q19+q22)/7');
+define('SLQ360_Bridging', '(q4+q9+q12+q27+q30+q34)/6');
+define('SLQ360_Bartering', '(q1+q7+q16+q20+q26+q33+q35)/7');
+define('SLQ360_Strategic', '(Q1+Q2+Q3+Q4+Q5+Q6+Q7+Q8+Q9+Q10+Q11+Q12+Q13+Q14+Q15+Q16+Q17+Q18+Q19+Q20+Q21+Q22+Q23+Q24+Q25+Q26+Q27+Q28+Q29+Q30+Q31+Q32+Q33+Q34+Q35)/35');
+
+define('SLNAGG_BLANK_ANNO', "<span title='Click to edit...' style='height:3px; visibility: hidden;'>-</span>");
+define('SLNAGG_BLANK_ANNO_MSG', "Interpretation Goes Here - Click to Edit, type the word BLANK to hide this.");
+
+// TODO: ensure exists and is writable, warn otherwise
+//define('SLN_DATA_PATH', 'sites/default/files/slnagg');
+
+/**
+ * Implements hook_menu.
+ */
+function slnagg_menu() {
+  $items = array();
+
+  $items['au2017'] = array(
+    'title' => 'The Strategic Leader Network - AU 2017 Schools Listing',
+    'page callback' => '_slnagg_su2017_list',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['au2017/annosave'] = array(
+    'title' => 'The Strategic Leader Network - AU 2017 Schools Save Annotation',
+    'page callback' => '_slnagg_su2017_annosave',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['au2017/tally'] = array(
+    'title' => 'The Strategic Leader Network - AU 2017 Schools Tally Listing',
+    'page callback' => '_slnagg_su2017_tally_list',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['au2017/distrib'] = array(
+    'title' => 'The Strategic Leader Network - AU 2017 Schools Distribution',
+    'page callback' => '_slnagg_su2017_distrib',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['au2017/%'] = array(
+    'title' => 'The Strategic Leader Network - School',
+    'title arguments' => array(1),  // school identifier
+    'title callback' => '_slnagg_au2017_title',
+    'page callback' => '_slnagg_au2017_school',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(1),  // school identifier
+  );
+
+  return $items;
+}
+
+// using jeditable
+// http://www.appelsiini.net/projects/jeditable
+function _slnagg_su2017_annosave() {
+
+  $id = str_replace("interpretation-", "", $_REQUEST['id']);
+  $school = $_REQUEST['school'];
+  $value = $_REQUEST['value'];
+
+  //$sql = "REPLACE INTO john2017.interpretations (school, id, note) VALUES (:school, :id, :note)";
+  //db_query($sql, array(':school' => $school, ':id' => $id, ':note' => $value))->execute();
+  
+  /*db_merge('john2017.interpretations')
+    ->key(array('school' => $school, 'id' => $id))
+    ->fields(array(
+        'school' => $school,
+        'id' => $id,
+        'note' => $value,
+    ))
+    ->execute();  */
+    
+  if (db_query("SELECT COUNT(*) FROM john2017.interpretations WHERE school = :school AND id = :id", array(':school' => $school, ':id' => $id))->fetchField()) {
+    $sql = "UPDATE john2017.interpretations SET note = :note WHERE school = :school AND id = :id";
+  }
+  else {
+    $sql = "INSERT INTO john2017.interpretations (school, id, note) VALUES (:school, :id, :note)";
+  }
+  db_query($sql, array(':school' => $school, ':id' => $id, ':note' => $value));
+  
+  watchdog('slnagg', "saving annotation $id for $school: $value");
+  
+  
+  print (($value == "NONE") || ($value == "BLANK")) ? SLNAGG_BLANK_ANNO : ($value ? $value : SLNAGG_BLANK_ANNO_MSG);
+}
+ 
+function _slnagg_su2017_distrib() {
+  $sql =<<< EOS
+select p.sid as source, wsd2.sid as target
+from john2017.participants p inner join john2017.slq360 s on s.email = p.email 
+left join sln.field_data_field_project_observers o1 on o1.field_project_observers_field_project_observer_email_value = s.email 
+left join sln.field_data_field_project_observers o2 on o2.field_project_observers_field_project_observer_email_value = s.email 
+inner join sln.webform_submissions ws on ws.sid = s.sid
+inner join sln.node n on n.nid = o2.entity_id
+inner join sln.webform_submitted_data wsd2 on wsd2.data = o2.field_project_observers_field_project_observer_token_value
+where o1.entity_id = 248 and o2.entity_id <> 248 and ws.nid = 116
+and o1.field_project_observers_field_project_observer_token_value <> o2.field_project_observers_field_project_observer_token_value
+EOS;
+  $rs = db_query($sql);      
+  $s = "";
+  $s .= "<ul>";
+  foreach ($rs as $r) {
+    
+    $t = "insert ignore into sln.webform_submitted_data (nid, sid, cid, no, data) (select nid,  $r->target, cid, no, data from sln.webform_submitted_data where sid =  $r->source and nid = 116 and not cid in (82,83,84))";
+    db_query($t)->execute();
+    
+    $u = "update sln.webform_submissions set completed = 1 where nid = 116 and sid = $r->target";
+    db_query($u)->execute();
+
+    $s .= "<li>$t;</li>";
+    $s .= "<li>$u;</li>";
+  }
+
+  $s .= "</ul>";
+
+  return $s;
+}
+ 
+ 
+function _slnagg_su2017_tally_list() {
+  $s = "";
+  $s .= "<p><a href='/au2017'>Click here to return to schools list</a></p>";
+  $s .= "<p>Values in columns are the unique ID's for the associated completed survey submissions. Blanks indicate no submission for that person/survey.</p>";
+
+  $s .= "<style>.report, .report  td  {border: solid thin black;}</style>";
+  
+  $s .= "<table class='report' style=';margin: 0 auto;'>";
+  $s .= "<thead><tr>";
+  $s .= "<th>School</th><th>Role</th><th>Email</th><th>Name</th><th>SLQ360</th><th>EOS</th><th>EDS</th><th>STQ</th>";
+  $s .= "</tr></thead>";
+    
+  
+  // note: assume john2017 has same grants as default drupal db connection
+  
+  // TODO: (1) add an "Aggregate all schools" option and a "Print all reports" option.  
+  // Add to mentu too as /au2017/aggall and /au2017/displayall or as special cases in existing handler
+  // Display all will iterate over all schools, generating one document with all school reports seperated by page breaks
+  // 
+
+  $sql = "SELECT p.school as school, p.role as role, p.email as email, p.name as name, ifnull(s.sid, '') as SLQ360, ifnull(eos.eosid, '') as EOS, ifnull(eds.edsid, '') AS EDS, ifnull(user_stq.stqid, '') AS STQ FROM john2017.participants p left  join john2017.slq360 s on s.email = p.email left join john2017.eos on eos.email = p.email left join john2017.eds on eds.email = p.email left join john2017.users on users.mail = p.email left join john2017.user_stq on user_stq.uid = users.uid order by 1, 2, 3";
+  $rs = db_query($sql);      
+  foreach ($rs as $r) {
+    $s .= "<tr>";
+    $s .= "<td>$r->school</td><td>$r->role</td><td>$r->email</td><td>$r->name</td><td><a href='/node/116/submission/$r->SLQ360'>$r->SLQ360</a></td><td>$r->EOS</td><td>$r->EDS</td><td>$r->STQ</td>";
+    
+    //$s .= "<a href='/au2017/" . $r->school . "'>" . $r->school . "</a> (" . $r->cnt2 . "/" . $r->cnt . "<br/>\n";
+    $s .= "</tr>";
+  }
+  $s .= "</table>";
+  return $s;
+}
+
+ 
+
+function _slnagg_su2017_list() {
+  
+  $s = "";
+  $s .= "<p><a href='/au2017/tally'>Click here to view participant list</a></p>";
+  $s .= "<p>Click on school name below to view report. Numbers indicate 360slq surveys received / participants invited.</p>";
+  $s .= "<ul>";
+  
+  // note: assume john2017 has same grants as default drupal db connection
+  
+  // TODO: (1) add an "Aggregate all schools" option and a "Print all reports" option.  
+  // Add to mentu too as /au2017/aggall and /au2017/displayall or as special cases in existing handler
+  // Display all will iterate over all schools, generating one document with all school reports seperated by page breaks
+  // 
+
+  $sql = "select school, count(*) as cnt, count(slq360.email) as cnt2 from john2017.participants left join john2017.slq360 on slq360.email = participants.email group by school order by school";
+  $rs = db_query($sql);      
+  foreach ($rs as $r) {
+    $s .= "<li>";
+    $s .= "<a href='/au2017/" . $r->school . "'>" . $r->school . "</a> (" . $r->cnt2 . "/" . $r->cnt . ")&nbsp;(<small><a title='Generate PDF version of report...' target='_blank' href='/printpdf/au2017/" . $r->school . "'>PDF</a></small>)<br/>\n";
+    $s .= "</li>";
+  }
+  $s .= "</ul>";
+  return $s;
+}
+
+ 
+function _slnagg_au2017_title($school) {
+  //return t('The Strategic Leader Network - @school', array('@school' => $school));
+  return "";
+}
+ 
+function _slnagg_au2017_school($school) {
+  
+  // logo - add to title callback?
+
+  
+  // title, query, headers, school, survey name, skill
+  
+
+  $dataa = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team', 'stq', 'strategicThinking/100', 'Strategic Thinking Capacity'));
+  $datab = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team', 'stq', 'systemsThinking/100', 'Systems Thinking'));
+  $datac = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team', 'stq', 'reframing/100', 'Reframing'));
+  $datad = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team', 'stq', 'reflecting/100', 'Reflecting'));
+  $table1 = "<table><thead><tr><td>Measure</td><td>N</td><td>Mean</td><td>SD</td></tr></thead><tr>$dataa</tr><tr><td colspan='4'><i>Subscales</i></td></tr><tr>$datab</tr><tr>$datac</tr><tr>$datad</tr></table>";
+    
+    
+  // save values to array for use in chart and benchmarks?
+  
+  $stats_data = array();
+  
+  $stats_data[] = array(
+    _slnagg_get_complex($school, 'Leadership Team', 'slq360', SLQ360_Transforming, 'Transforming'), 
+    _slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Transforming, 'Transforming')
+  );
+  
+  $stats_data[] = array(
+    _slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Managing, 'Managing'), 
+    _slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Managing, 'Managing')
+  );
+  
+  $stats_data[] = array(
+    _slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Bonding, 'Bonding'), 
+    _slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Bonding, 'Bonding')
+  );
+  
+  $stats_data[] = array(
+    _slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Bridging, 'Bridging'), 
+    _slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Bridging, 'Bridging')
+  );
+  
+  $stats_data[] = array(
+    _slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Bartering, 'Bartering'), 
+    _slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Bartering, 'Bartering')
+  );
+  
+  $stats_data[] = array(
+    _slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Strategic, 'Strategic Leadership Capacity'), 
+    _slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Strategic, 'Strategic Leadership Capacity')
+  );
+    
+  $dataa = _sln_output_stats($stats_data[0][0]) . _sln_output_stats($stats_data[0][1], true);
+  $datab = _sln_output_stats($stats_data[1][0]) . _sln_output_stats($stats_data[1][1], true);
+  $datac = _sln_output_stats($stats_data[2][0]) . _sln_output_stats($stats_data[2][1], true);
+  $datad = _sln_output_stats($stats_data[3][0]) . _sln_output_stats($stats_data[3][1], true);
+  $datae = _sln_output_stats($stats_data[4][0]) . _sln_output_stats($stats_data[4][1], true);
+  $dataf = _sln_output_stats($stats_data[5][0]) . _sln_output_stats($stats_data[5][1], true);
+
+  //dpm($stats_data);
+  
+  // $dataa = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team', 'slq360', SLQ360_Transforming, 'Transforming')) . _sln_output_stats(_slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Transforming, 'Transforming'), true);
+  // $datab = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Managing, 'Managing')) . _sln_output_stats(_slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Managing, 'Managing'), true);
+  // $datac = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Bonding, 'Bonding')) . _sln_output_stats(_slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Bonding, 'Bonding'), true);
+  // $datad = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Bridging, 'Bridging')) . _sln_output_stats(_slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Bridging, 'Bridging'), true);
+  // $datae = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Bartering, 'Bartering')) . _sln_output_stats(_slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Bartering, 'Bartering'), true);
+  // $dataf = _sln_output_stats(_slnagg_get_complex($school, 'Leadership Team',  'slq360', SLQ360_Strategic, 'Strategic Leadership Capacity')) . _sln_output_stats(_slnagg_get_complex($school, 'Observer',  'slq360', SLQ360_Strategic, 'Strategic Leadership Capacity'), true);
+  
+  $table2 = "<table><thead><tr><td>&nbsp;</td><td colspan='3'>Leadership Team</td><td colspan='3'>Teachers/Observers</td></tr><tr><td>&nbsp;</td><td>N</td><td>Mean</td><td>SD</td><td>N</td><td>Mean</td><td>SD</td></tr></thead><tr>$dataa</tr><tr></tr><tr>$datab</tr><tr>$datac</tr><tr>$datad</tr><tr>$datae</tr><tr>$dataf</tr></table>";
+
+  
+  
+  
+  $dataa = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eds',  'scoreAll', 'Entrepreneurial Leadership Capacity'));
+  $datab = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eds',  'scoreRT', 'Risk Taking'));
+  $datac = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eds',  'scoreI', 'Innovativenes'));
+  $datad = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eds',  'scoreP', 'Proactiveness'));
+  $table3 = "<table><thead><tr><td>Measure</td><td>N</td><td>Mean</td><td>SD</td></tr></thead><tr>$dataa</tr><tr><td colspan='4'><i>Subscales</i></td></tr><tr>$datab</tr><tr>$datac</tr><tr>$datad</tr></table>";
+  
+  
+  
+  $dataa = _sln_output_stats(_slnagg_get_simple($school, "Leadership Team", 'eos', '(q1+q2+q3+q4+q5+q6+q7+q8+q9+q10)/10', 'School EO')) . _sln_output_stats(_slnagg_get_simple($school, "Observer", 'eos', '(q1+q2+q3+q4+q5+q6+q7+q8+q9+q10)/10', 'School EO'), 1);
+  $datab = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eos',  '(q7+q8+q9+q10)/4', 'Risk Taking')) . _sln_output_stats(_slnagg_get_simple($school, "Observer", 'eos', '(q7+q8+q9+q10)/3', 'Risk Taking'), 1);
+  $datac = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eos',  '(q1+q2+q3)/3', 'Innovativenes')) . _sln_output_stats(_slnagg_get_simple($school, "Observer", 'eos', '(q1+q2+q3)/3', 'Innovativenes'), 1);
+  $datad = _sln_output_stats(_slnagg_get_simple($school, 'Leadership Team', 'eos',  '(q4+q5+q6)/3', 'Proactiveness')) . _sln_output_stats(_slnagg_get_simple($school, "Observer", 'eos', '(q4+q5+q6)/3', 'Proactiveness'), 1);
+
+  
+  
+  $table4 = "<table><thead><tr><td>&nbsp;</td><td colspan='3'>Leadership Team</td><td colspan='3'>Teachers/Observers</td></tr><tr><td>Measure</td><td>N</td><td>Mean</td><td>SD</td><td>N</td><td>Mean</td><td>SD</td></tr></thead><tr>$dataa</tr><tr><td colspan='7'><i>Subscales</i></td></tr><tr>$datab</tr><tr>$datac</tr><tr>$datad</tr></table>";
+  
+  $mapchartlabels = array("Transforming", "Managing", "Bonding", "Bridging", "Bartering");
+  $chartdata = array();
+  $chartdata[] = array($stats_data[0][0]['Mean'],$stats_data[1][0]['Mean'],$stats_data[2][0]['Mean'],$stats_data[3][0]['Mean'],$stats_data[4][0]['Mean']);  // green
+  $chartdata[] = array($stats_data[0][1]['Mean'],$stats_data[1][1]['Mean'],$stats_data[2][1]['Mean'],$stats_data[3][1]['Mean'],$stats_data[4][1]['Mean']); // blue
+  $chartdata[] = array(0,0,0,0,0); // array(3,3,3,3,3); // red
+  $chartdata[] = array(4,4,4,4,4);  // not used?
+ 
+ 
+  $radarchart = _slnagg_radar_chart($mapchartlabels, $chartdata, $school, 40, 50, 60);
+  
+  $return_link = "<img src='/sites/all/modules/slnagg/slnagg-logo.jpg' alt='logo'/>";
+  if (strpos($_SERVER['REQUEST_URI'],'/printpdf/') === FALSE)
+    $return_link = "<p><a href='/au2017'>Return to list of schools</a></p>";
+  
+  $s = file_get_contents(SLNAGG_PATH . '/slnagg.tpl.php');
+  
+  $s = str_replace(array('%SCHOOL%','%SCHOOLCLEAN%','%TABLE1%','%TABLE2%','%TABLE3%','%TABLE4%', '%RETURN_LINK%'), array($school, str_replace(' ', '_', $school), $table1, $table2, $table3, $table4, $return_link), $s);
+  
+  
+  $patterns = array('%MAP_CHART%', '%Managing_SCORE_L%', '%Transforming_SCORE_L%', '%Bonding_SCORE_L%', '%Bridging_SCORE_L%', '%Bartering_SCORE_L%', '%Total_SCORE_L%', '%Managing_SCORE_O%', '%Transforming_SCORE_O%', '%Bonding_SCORE_O%', '%Bridging_SCORE_O%', '%Bartering_SCORE_O%', '%Total_SCORE_O%');
+  
+  $values = array($radarchart, $stats_data[1][0]['Mean'], $stats_data[0][0]['Mean'], $stats_data[2][0]['Mean'], $stats_data[3][0]['Mean'], $stats_data[4][0]['Mean'], $stats_data[5][0]['Mean']
+  
+  , $stats_data[1][1]['Mean'], $stats_data[0][1]['Mean'], $stats_data[2][1]['Mean'], $stats_data[3][1]['Mean'], $stats_data[4][1]['Mean'], $stats_data[5][1]['Mean']);
+  
+  // action table is (skill, #, q, mean obs, mean leaders) 
+  $atdata = array();
+  for ($i=0; $i<43; $i++) {
+    $j = $i+1;
+    $obs = _slnagg_slq360_column($school, "Observer", "Q$j");
+    $sup = _slnagg_slq360_column($school, "Leadership Team", "Q$j");
+    $atdata[0][] = $obs;
+    $atdata[1][] = $sup;
+    $patterns[] = "%OBS_$j%";
+    $patterns[] = "%SUP_$j%";
+    $values[] = $obs['Mean'];
+    $values[] = $sup['Mean'];
+  }
+  $patterns[] = "%ACTION_TABLE_OBS_CNT%";
+  $patterns[] = "%ACTION_TABLE_SUP_CNT%";
+  $values[] = $atdata[0][0]['N'];
+  $values[] = $atdata[1][0]['N'] ;
+  
+  for ($k = 0; $k < 6; $k++) {
+    $patterns[] = "%INTERPRETATION_$k%";
+    $sql = "SELECT note FROM john2017.interpretations WHERE school = :school AND id = :id";
+    $note = db_query( $sql, array(':school' => $school, ':id' => $k) )->fetchField();
+    $values[] = $note ? (($note == "NONE" || $note == "BLANK")? SLNAGG_BLANK_ANNO : $note) : SLNAGG_BLANK_ANNO_MSG;
+  }
+  
+  //dpm(array($patterns, $values));
+  
+  $s = str_replace($patterns, $values, $s);
+  
+  return $s;
+}
+
+// output stat triple as table cells
+
+
+// table output functions? eos/eds vs slq/stq vs 360?  col headers here?
+
+// scores related routines? for row labels? or part of data gen?
+
+
+// queries to arrays with params for school
+
+// eos and eds style
+function _slnagg_get_simple($school, $role = 'Leadership Team', $table = 'eds', $column = 'scoreAll', $key='', $db = 'john2017') {
+
+  $key = $key ? $key : $column;
+  
+  $data = array();
+
+  // allow multiple schools and roles?
+  //$sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.$table inner join $db.participants on $table.email = participants.email where school = ':school' and role = 'Leadership Team' group by school, role order by school, role";
+
+  $sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.$table inner join $db.participants on $table.email = participants.email where school = :school and role = :role";
+  
+  //return $sql;
+
+  $rs = db_query($sql, array(':school' => $school, ':role' => $role));
+  
+  foreach ($rs as $r) {
+    $data = array('key' => $key, 'N' => $r->N, 'Mean' => $r->Mean, 'SD' => $r->SD);
+  }
+
+  return $data;
+} // _slnagg_get_simple
+
+
+
+function _slnagg_get_complex($school, $role = 'Leadership Team', $table = 'stq', $column = 'strategicThinking', $key='', $db = 'john2017') {
+
+  $key = $key ? $key : $column;
+
+  $data = array();
+
+  // allow multiple schools and roles?
+  //$sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.$table inner join $db.participants on $table.email = participants.email where school = ':school' and role = 'Leadership Team' group by school, role order by school, role";
+
+  //$sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.$table inner join $db.participants on $table.email = participants.email where school = :school and role = :role";
+  
+  switch ($table) {
+    case "slq360":
+      $sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.slq360 s inner join $db.participants p on s.email = p.email where school = :school and role = :role";
+      break;
+    default: 
+      $sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.$table inner join $db.user_$table on user_$table." . $table . "id = $table.id inner join $db.participants on user_$table.uid = participants.uid where school = :school and role = :role";
+      break;
+  }
+  
+  
+  //dsm( $sql );
+
+  $rs = db_query($sql, array(':school' => $school, ':role' => $role));
+  
+  foreach ($rs as $r) {
+    $data = array('key' => $key, 'N' => $r->N, 'Mean' => $r->Mean, 'SD' => $r->SD);
+  }
+
+  return $data;
+} // _slnagg_get_simple2
+
+function _sln_output_stats($data, $nokey = false) {
+  
+  if ($nokey)
+    $s = "<td>%N%</td><td>%MEAN%</td><td>%SD%</td>";
+  else
+    $s = "<td>%KEY%</td><td>%N%</td><td>%MEAN%</td><td>%SD%</td>";
+  $s = str_replace(array('%KEY%', '%N%', '%MEAN%', '%SD%'), array($data['key'], $data['N'], $data['Mean'], $data['SD']), $s);
+  
+  return $s;  
+}
+
+
+
+
+/**
+ * Draw a radar chart
+ *
+ * see http://wiki.pchart.net/doc.draw.radar.html
+ *
+ *
+ */
+function _slnagg_radar_chart($labels, $data, $school, $obscount = 0, $supcount = 0, $selfcount = 0) {
+  //$path = '/var/www/sln.thestrategicleader.org/public/sites/all/libraries/pchart';
+  $path = $_SERVER["DOCUMENT_ROOT"] . "/sites/all/libraries/pchart";
+  include("$path/class/pData.class.php");
+  include("$path/class/pDraw.class.php");
+  include("$path/class/pImage.class.php");
+  include("$path/class/pRadar.class.php");
+
+  $height = 650;
+  $width = 1000;
+  $hmargin = 180;
+  $vmargin = 0;
+  $fontsize = 24;
+
+  $MyData = new pData();
+
+  $MyData->addPoints($data[0], "Observers");
+  $MyData->setSerieDescription("Observers", "Observers");
+  $MyData->setPalette("Observers", array("R" => 0, "G" => 176, "B" => 80)); // #00B050 = green
+  //$MyData->setSerieWeight("Observers", 4);
+
+  $MyData->addPoints($data[1], "Supervisor");
+  $MyData->setSerieDescription("Supervisor", "Supervisor");
+  $MyData->setPalette("Supervisor", array("R" => 0, "G" => 0, "B" => 255));
+  //$MyData->setSerieWeight("Supervisor", 4);
+
+  //$MyData->addPoints($data[2], "Self");
+  //$MyData->setSerieDescription("Self", "Self");
+  //$MyData->setPalette("Self", array("R" => 255, "G" => 0, "B" => 0));
+  //$MyData->setSerieWeight("Self", 4);
+
+  $MyData->addPoints($labels, "Skills");
+  $MyData->setAbscissa("Skills");
+
+  $myPicture = new pImage($width, $height, $MyData, TRUE);
+  $myPicture->setFontProperties(
+    array(
+     //  "FontName" => "$path/fonts/advent_light.ttf",
+      // "FontName" => "$path/fonts/Bedizen.ttf",
+      // "FontName" => "$path/fonts/calibri.ttf",
+      // "FontName" => "$path/fonts/Forgotte.ttf",
+      // "FontName" => "$path/fonts/GeosansLight.ttf",
+      // "FontName" => "$path/fonts/MankSans.ttf",
+       "FontName" => "$path/fonts/OpenSans-Bold.ttf",
+      // "FontName" => "$path/fonts/pf_arma_five.ttf",
+      // "FontName" => "$path/fonts/verdana.ttf",
+      // "FontName" => "$path/fonts/Ubuntu-R.ttf",
+      // "FontName" => "$path/fonts/Architex.ttf",
+      // "FontName" => "$path/fonts/Quikhand.ttf",
+      // "FontName" => "$path/fonts/AlegreyaSans-Medium.ttf",
+      "FontSize" => $fontsize,
+      "R" => 0, "G" => 0, "B" => 0
+    )
+  );
+  $myPicture->setGraphArea($hmargin, $vmargin, $width-$hmargin-1, $height-$vmargin-1);
+  //$myPicture->setGraphArea($hmargin, $vmargin, $width-1, $height-1);
+  //$myPicture->setShadow(TRUE,array("X" => 2, "Y" => 2, "R" => 0, "G" => 0, "B" => 0, "Alpha" => 10));
+
+  //$bgGradient = array('StartR' => 255, 'StartG' => 0, 'StartB' => 0, 'StartAlpha' => 100, 'EndR' => 0, 'EndG' => 255, 'EndB' => 0, 'EndAlpha' => 100);
+
+  $Options = array(
+    'DrawPoly' => FALSE,
+    'WriteValues' => FALSE,
+    'LabelsBackground' => FALSE,
+    'DrawBackground' => FALSE,
+    'WriteValues' => TRUE,
+    'DrawAxisValues' => FALSE,
+    'WriteValuesInBubble' => TRUE,
+    'Layout' => RADAR_LAYOUT_STAR,
+    'LabelPos' => RADAR_LABELS_HORIZONTAL,
+    'SegmentHeight' => 1, //SEGMENT_HEIGHT_AUTO,
+    'Segments' => 5,
+    'FixedMax' => 5,
+    'AxisRotation' => -90,
+    'PointRadius' => 4,
+    //'PolyAlpha' => 50,
+    'ValueFontSize' => $fontsize / 2 ,
+    //'BackgroundGradient' => $bgGradient,
+  );
+
+  //$legend_options = array("Style"=>LEGEND_NOBORDER, "Mode"=>LEGEND_HORIZONTAL, "Family" => LEGEND_FAMILY_CIRCLE);
+  //$legend_size = $myPicture->getLegendSize($legend_options);
+  //$myPicture->drawLegend(($size - $legend_size['Width'])/2 + 10, $size - $legend_size['Height'], $legend_options);
+
+  $MyChart = new pRadar();
+  $MyChart->drawRadar($myPicture, $MyData, $Options);
+
+  // todo: chart changes:
+  // set min to 1, not 0
+  // inc by 1 always (increasing chart size causes units to move to 0.5), use SegmentHeight ? setFixedScale(-12,12)?
+
+  $output = file_create_filename("sln-radar-$school.png", 'sites/default/files/sln-charts');
+  $myPicture->Render($output);
+  
+  // TODO: SLQ independent and chart independent solution needed here for area map   
+  // coords are for rectangles around vertex labels for skills
+  $coordsarr = array('377,0,645,106', '730,165,998,286', '638,544,827,625', '168,544,357,625', '0,164,268,270');
+  $areas = "";
+  foreach ($labels as $ndx => $skill) {
+    $obs = $data[0][$ndx];
+    $sup = $data[1][$ndx];
+    $self = $data[2][$ndx];
+    //$title = "$skill: Obs: $obs ($obscount), Sup: $sup ($supcount), Self: $self ($selfcount)";  
+    $title = "$skill: Observers: $obs ($obscount), Leadership: $sup ($supcount)";  
+    $coords = $coordsarr[$ndx];
+    $href = "javascript: alert(\"$title\")";
+    $areas .= "<area class='tipsy' title='$title' href='$href' shape='rect' coords='$coords'/>\n";
+  } // foreach
+  
+  return "<div id='pchart_ajax'><img src='" . file_create_url($output) . "' usemap='#chartmap'/><map name='chartmap'>$areas</map></div>";
+} // _slnagg_radar_chart
+
+
+// single slq360 question
+function _slnagg_slq360_column($school, $role = 'Leadership Team', $column, $key='', $db = 'john2017') {
+
+  $key = $key ? $key : $column;
+  
+  $data = array();
+
+  $table = "slq360";
+
+  $sql = "SELECT count(*) as N, truncate(avg($column),2) as Mean, truncate(std($column),2) as SD from $db.$table inner join $db.participants on $table.email = participants.email where school = :school and role = :role";
+  
+  //return $sql;
+  //dpm($sql);
+
+  $rs = db_query($sql, array(':school' => $school, ':role' => $role));
+  
+  foreach ($rs as $r) {
+    $data = array('key' => $key, 'N' => $r->N, 'Mean' => $r->Mean, 'SD' => $r->SD);
+  }
+  
+  //dpm($data);
+
+  return $data;
+} // _slnagg_slq360_column

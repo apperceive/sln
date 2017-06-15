@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * @file
+ *   slnagg module install/schema hooks.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function slnagg_schema() {
+  $schema = array();
+
+  /*
+  $schema['slnagg_survey'] = array(
+    'description' => 'Table for storing additional properties for webform nodes.',
+    'fields' => array(
+     'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'cid' => array(
+        'description' => 'The identifier for this component within this node, starts at 0 for each node.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sid' => array(
+        'description' => 'Scoring category or skill identifier from taxonomy vocabulary sln_skills.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid', 'cid'),
+  );
+  */
+  return $schema;
+} // slnagg_schema
+
+/**
+ * Implements hook_install().
+ */
+function slnagg_install() {
+  //module_load_include('inc', 'node', 'content_types');
+  //db_query("UPDATE {system} SET weight = -1 WHERE name = 'webform' AND type = 'module'");
+  
+  // drupal_install_schema obsolete in D7
+  //drupal_install_schema('slnsite');
+  
+} // slnagg_install
+
+/**
+ * Implements hook_uninstall().
+ */
+function slnagg_uninstall() {
+  // Unset slnsite variables.
+  // variable_del('slnagg_plan_base_node_title');
+  // variable_del('slnagg_plan_base_node_id');
+
+  // Drop tables. obsolete in D7
+  //drupal_uninstall_schema('slnagg_component_scoring');
+} // slnagg_uninstall
+
+/**
+ * Implements hook_requirements().
+ */
+function slnagg_requirements($phase = 'runtime') {
+  $requirements = array();
+  $t = get_t();
+
+  // TODO: check for required variables and content types
+  
+  // Check for duplicate tokens.
+  if ($phase == 'runtime') {
+    $requirements['slnagg'] = array(
+      'title' => $t('SLN Data Requirements'),
+      'value' => $t('Requirement text goes here.'),
+      'severity' => REQUIREMENT_INFO,
+      'description' => "this is a description", // theme('item_list', $duplicate_tokens),
+    );
+  }
+  return $requirements;
+} // slnagg_requirements
+
